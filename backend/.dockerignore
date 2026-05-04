@@ -1,0 +1,30 @@
+# Dependencies (installed fresh in Docker)
+node_modules/
+npm-debug.log*
+
+# Environment & secrets (NEVER bake into image)
+.env
+.env.*
+!.env.example
+
+# Dev tooling
+.github/
+.eslintrc*
+*.md
+ecosystem.config.js
+nodemon.json
+
+# Logs
+logs/
+*.log
+
+# OS / IDE artifacts
+.DS_Store
+.vscode/
+Thumbs.db
+
+# Test artifacts
+coverage/
+__tests__/
+*.test.js
+*.spec.js
