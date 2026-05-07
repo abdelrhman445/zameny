@@ -1,26 +1,30 @@
 'use client';
+
 import React, { useState } from 'react';
-import { Search, Phone, ShieldAlert, ShieldCheck, AlertTriangle, Clock, Package } from 'lucide-react';
-import { CustomerHistoryResponse, CustomerHistory } from '@/types';
-import { cn, formatCurrency, formatDate, formatDateShort } from '@/lib/utils';
+import { 
+  Search, Phone, ShieldAlert, ShieldCheck, AlertTriangle, 
+  Package, UserX, History, Activity, TrendingDown 
+} from 'lucide-react';
+import { CustomerHistoryResponse } from '@/types';
+import { cn, formatCurrency, formatDateShort } from '@/lib/utils';
 import FraudBadge from '@/components/dashboard/FraudBadge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { PageLoading } from '@/components/shared/LoadingSpinner';
-import { ErrorAlert } from '@/components/shared/ErrorAlert';
 import api from '@/lib/api';
 
 const STATUS_LABELS: Record<string, string> = {
-  Pending: 'انتظار', Flagged: 'مشبوه', Confirmed: 'مؤكد',
-  Shipped: 'شحن', Delivered: 'مسلّم', RTO: 'مرتجع', Cancelled: 'ملغي',
+  Pending: 'قيد الانتظار', Flagged: 'مشبوه', Confirmed: 'تم التأكيد',
+  Shipped: 'جاري الشحن', Delivered: 'تم التسليم', RTO: 'مرتجع', Cancelled: 'ملغي',
 };
+
 const STATUS_COLORS: Record<string, string> = {
-  Pending: 'bg-slate-100 text-slate-600', Flagged: 'bg-red-100 text-red-700',
+  Pending: 'bg-slate-100 text-slate-600', Flagged: 'bg-rose-100 text-rose-700',
   Confirmed: 'bg-blue-100 text-blue-700', Shipped: 'bg-indigo-100 text-indigo-700',
-  Delivered: 'bg-emerald-100 text-emerald-700', RTO: 'bg-orange-100 text-orange-700',
-  Cancelled: 'bg-gray-100 text-gray-600',
+  Delivered: 'bg-emerald-100 text-emerald-700', RTO: 'bg-amber-100 text-amber-700',
+  Cancelled: 'bg-slate-100 text-slate-500',
 };
 
 export default function CustomersPage() {
@@ -44,9 +48,9 @@ export default function CustomersPage() {
       const status = (err as { response?: { status?: number } }).response?.status;
       if (status === 404) {
         setData(null);
-        setError('لم يتم العثور على سجل لهذا الرقم');
+        setError('لم يتم العثور على أي سجل طلبات لهذا الرقم.');
       } else {
-        setError(msg || 'فشل البحث');
+        setError(msg || 'حدث خطأ أثناء البحث، يرجى المحاولة لاحقاً.');
       }
     } finally {
       setLoading(false);
@@ -55,202 +59,274 @@ export default function CustomersPage() {
 
   const ch = data?.customerHistory;
 
+  // تحديد مستوى الخطر لتلوين الواجهة
+  const isDanger = ch?.isBlacklisted || ch?.riskLevel === 'High';
+  const isWarning = !isDanger && ch?.riskLevel === 'Medium';
+  const isSafe = ch?.riskLevel === 'Low' && !ch?.isBlacklisted;
+
   return (
-    <div className="space-y-6" dir="rtl">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">بحث العملاء</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">اعرف سجل أي عميل بناءً على رقم هاتفه</p>
+    <div className="space-y-6 animate-fade-in pb-10" dir="rtl">
+      
+      {/* ── Header ── */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight">بحث وسجل العملاء</h1>
+          <p className="text-sm font-medium text-slate-500 mt-1.5">
+            ابحث برقم هاتف العميل لكشف تاريخه الشرائي ومعدل المرتجعات قبل تأكيد الشحن.
+          </p>
+        </div>
       </div>
 
-      {/* Search Bar */}
-      <div className="flex gap-2 max-w-lg">
-        <div className="relative flex-1">
-          <Phone className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+      {/* ── Premium Search Bar ── */}
+      <div className="bg-white border border-slate-200/60 p-3.5 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.03)] flex flex-col sm:flex-row gap-3 items-center max-w-2xl transition-all">
+        <div className="relative w-full group">
+          <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+            <Phone className="w-5 h-5 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+          </div>
           <Input
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            placeholder="أدخل رقم هاتف العميل..."
-            className="pr-9 text-sm"
+            placeholder="أدخل رقم هاتف العميل (مثال: 010...)"
+            autoComplete="off"
+            className="pr-12 h-14 bg-slate-50/50 border-slate-200 focus-visible:ring-indigo-500 focus-visible:border-indigo-500 rounded-xl text-lg font-bold text-slate-900 transition-all tracking-wide"
             dir="ltr"
+            autoFocus
           />
         </div>
-        <Button onClick={handleSearch} disabled={loading || !phone.trim()}>
-          <Search className="w-4 h-4 ml-1.5" />
-          بحث
+        <Button 
+          onClick={handleSearch} 
+          disabled={loading || !phone.trim()} 
+          className="w-full sm:w-auto h-14 px-8 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/20 transition-all text-base"
+        >
+          <Search className="w-5 h-5 ml-2" /> بحث
         </Button>
       </div>
 
-      {/* Loading */}
-      {loading && <PageLoading label="جاري البحث عن سجل العميل..." />}
+      {/* ── Loading State ── */}
+      {loading && (
+        <div className="py-12">
+          <PageLoading label="جاري استخراج السجل من قاعدة البيانات..." />
+        </div>
+      )}
 
-      {/* Error */}
+      {/* ── Error / Not Found State ── */}
       {!loading && error && (
-        <div className="flex flex-col items-center py-12 gap-3">
-          <div className="w-14 h-14 bg-slate-100 rounded-full flex items-center justify-center">
-            <Phone className="w-6 h-6 text-slate-400" />
+        <div className="py-16 flex flex-col items-center justify-center bg-white/50 border border-dashed border-slate-300 rounded-3xl animate-fade-in">
+          <div className="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center shadow-sm mb-4 border border-slate-100">
+            <UserX className="w-10 h-10 text-slate-400" />
           </div>
-          <p className="text-muted-foreground text-sm">{error}</p>
+          <h3 className="text-xl font-bold text-slate-800">{error}</h3>
+          <p className="text-slate-500 text-sm mt-2 max-w-sm text-center font-medium leading-relaxed">
+            هذا العميل جديد تماماً أو أن الرقم مكتوب بشكل خاطئ.
+          </p>
         </div>
       )}
 
-      {/* No results yet */}
+      {/* ── Initial Empty State ── */}
       {!loading && !error && !searched && (
-        <div className="flex flex-col items-center py-16 gap-3 text-center">
-          <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center">
-            <Search className="w-7 h-7 text-slate-400" />
+        <div className="py-24 flex flex-col items-center justify-center bg-white/30 border border-dashed border-slate-200 rounded-3xl">
+          <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-[0_8px_30px_rgb(0,0,0,0.04)] mb-6 border border-slate-100">
+            <Search className="w-10 h-10 text-indigo-200" />
           </div>
-          <p className="font-medium text-slate-700">ابحث عن عميل</p>
-          <p className="text-sm text-muted-foreground">أدخل رقم هاتف العميل للاطلاع على سجله وتحليل مستوى خطره</p>
+          <h3 className="text-2xl font-black text-slate-800">مستكشف العملاء</h3>
+          <p className="text-slate-500 text-base mt-2 max-w-md text-center font-medium leading-relaxed">
+            استخدم محرك البحث بالأعلى لاستعراض تفاصيل أي عميل وتقييم مدى أمان التعامل معه.
+          </p>
         </div>
       )}
 
-      {/* Customer Profile */}
+      {/* ── Customer Profile Dashboard ── */}
       {!loading && !error && data && ch && (
-        <div className="space-y-5 animate-fade-in">
-          {/* Profile Header */}
-          <div className="flex flex-col sm:flex-row sm:items-start gap-4">
-            {/* Avatar */}
-            <div className={cn('w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0',
-              ch.isBlacklisted ? 'bg-red-100' : ch.riskLevel === 'Low' ? 'bg-emerald-100' : ch.riskLevel === 'Medium' ? 'bg-amber-100' : 'bg-red-100'
-            )}>
-              {ch.isBlacklisted ? (
-                <ShieldAlert className="w-7 h-7 text-red-600" />
-              ) : ch.riskLevel === 'Low' ? (
-                <ShieldCheck className="w-7 h-7 text-emerald-600" />
-              ) : (
-                <AlertTriangle className="w-7 h-7 text-amber-600" />
-              )}
-            </div>
+        <div className="space-y-6 animate-fade-in-up">
+          
+          {/* Profile Header Card */}
+          <div className="bg-white border border-slate-200/60 rounded-[2rem] p-6 md:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden">
+            {/* Ambient Background Glow based on Risk */}
+            <div className={cn(
+              "absolute top-0 left-0 w-64 h-64 rounded-full blur-3xl -ml-20 -mt-20 pointer-events-none opacity-20",
+              isDanger ? "bg-rose-500" : isWarning ? "bg-amber-500" : "bg-emerald-500"
+            )} />
 
-            <div className="flex-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-lg font-bold text-slate-900" dir="ltr">{ch.phoneNumber}</h2>
-                {ch.isBlacklisted && (
-                  <span className="px-2.5 py-1 bg-red-600 text-white text-xs font-bold rounded-full">
-                    🚫 محظور
-                  </span>
-                )}
-                <FraudBadge
-                  fraudAnalysis={{
-                    score: ch.fraudScore,
-                    riskLevel: ch.riskLevel,
-                    reason: '',
-                    rtoRate: ch.rtoRate,
-                    isNewCustomer: ch.totalOrders === 0,
-                    ipMismatch: false,
-                  }}
-                  showScore
-                />
-              </div>
-              {ch.lastOrderDate && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  آخر طلب: {formatDateShort(ch.lastOrderDate)}
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Stats Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            {[
-              { label: 'إجمالي الطلبات', value: ch.totalOrders, color: 'blue' },
-              { label: 'طلبات مرتجعة (RTO)', value: ch.rtoOrders, color: ch.rtoOrders > 0 ? 'red' : 'emerald' },
-              { label: 'نسبة الإرجاع', value: `${(ch.rtoRate * 100).toFixed(1)}%`, color: ch.rtoRate > 0.3 ? 'red' : 'emerald' },
-              { label: 'درجة الأمان', value: `${ch.fraudScore}/100`, color: ch.fraudScore >= 80 ? 'emerald' : ch.fraudScore >= 50 ? 'amber' : 'red' },
-            ].map((stat) => (
-              <div key={stat.label} className={cn('rounded-xl p-4 border',
-                stat.color === 'blue' ? 'bg-blue-50 border-blue-100' :
-                stat.color === 'emerald' ? 'bg-emerald-50 border-emerald-100' :
-                stat.color === 'amber' ? 'bg-amber-50 border-amber-100' :
-                'bg-red-50 border-red-100'
+            <div className="flex flex-col sm:flex-row sm:items-center gap-6 relative z-10">
+              {/* Avatar */}
+              <div className={cn(
+                'w-20 h-20 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm border-2',
+                isDanger ? 'bg-rose-50 border-rose-100' : isWarning ? 'bg-amber-50 border-amber-100' : 'bg-emerald-50 border-emerald-100'
               )}>
-                <p className="text-xs text-muted-foreground">{stat.label}</p>
-                <p className={cn('text-xl font-bold mt-1',
-                  stat.color === 'blue' ? 'text-blue-800' :
-                  stat.color === 'emerald' ? 'text-emerald-800' :
-                  stat.color === 'amber' ? 'text-amber-800' :
-                  'text-red-800'
-                )}>{stat.value}</p>
+                {isDanger ? (
+                  <ShieldAlert className="w-10 h-10 text-rose-600" />
+                ) : isSafe ? (
+                  <ShieldCheck className="w-10 h-10 text-emerald-600" />
+                ) : (
+                  <AlertTriangle className="w-10 h-10 text-amber-600" />
+                )}
               </div>
-            ))}
+
+              {/* Info */}
+              <div className="flex-1">
+                <div className="flex flex-wrap items-center gap-3 mb-2">
+                  <h2 className="text-2xl font-black text-slate-900 tracking-wider" dir="ltr">{ch.phoneNumber}</h2>
+                  {ch.isBlacklisted && (
+                    <span className="px-3 py-1 bg-rose-600 text-white text-xs font-bold rounded-lg shadow-sm flex items-center gap-1">
+                      <ShieldAlert className="w-3.5 h-3.5" /> عميل محظور
+                    </span>
+                  )}
+                  <FraudBadge
+                    fraudAnalysis={{
+                      score: ch.fraudScore,
+                      riskLevel: ch.riskLevel,
+                      reason: '',
+                      rtoRate: ch.rtoRate,
+                      isNewCustomer: ch.totalOrders === 0,
+                      ipMismatch: false,
+                    }}
+                    showScore
+                  />
+                </div>
+                {ch.lastOrderDate ? (
+                  <p className="text-sm font-medium text-slate-500 flex items-center gap-1.5">
+                    <History className="w-4 h-4 text-slate-400" />
+                    آخر طلب مسجل بتاريخ: <strong className="text-slate-700">{formatDateShort(ch.lastOrderDate)}</strong>
+                  </p>
+                ) : (
+                  <p className="text-sm font-medium text-slate-500">لا يوجد تاريخ طلبات سابقة</p>
+                )}
+              </div>
+            </div>
           </div>
 
-          {/* Fraud Score Bar */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm">تحليل مستوى الخطر</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>درجة الأمان</span>
-                <span className="font-bold text-slate-900">{ch.fraudScore} / 100</span>
-              </div>
-              <Progress
-                value={ch.fraudScore}
-                className={cn('h-3',
-                  ch.fraudScore >= 80 ? '[&>div]:bg-emerald-500' :
-                  ch.fraudScore >= 50 ? '[&>div]:bg-amber-500' :
-                  '[&>div]:bg-red-500'
-                )}
-              />
-              <div className="flex gap-4 text-xs">
-                <span className="text-slate-500">IPs المعروفة: {ch.knownIps.length}</span>
-                <span className={cn('font-medium', ch.isBlacklisted ? 'text-red-600' : 'text-emerald-600')}>
-                  {ch.isBlacklisted ? '🚫 محظور' : '✅ غير محظور'}
-                </span>
-              </div>
-              {ch.knownIps.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mt-2">
-                  {ch.knownIps.map((ip) => (
-                    <span key={ip} className="font-mono text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded" dir="ltr">{ip}</span>
-                  ))}
+          {/* KPI Stats Cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              { label: 'إجمالي الطلبات', value: ch.totalOrders, icon: Package, color: 'indigo', format: (v: number) => v },
+              { label: 'طلبات مرتجعة (RTO)', value: ch.rtoOrders, icon: TrendingDown, color: ch.rtoOrders > 0 ? 'rose' : 'emerald', format: (v: number) => v },
+              { label: 'نسبة الإرجاع', value: ch.rtoRate, icon: Activity, color: ch.rtoRate > 0.3 ? 'rose' : ch.rtoRate > 0.15 ? 'amber' : 'emerald', format: (v: number) => `${(v * 100).toFixed(1)}%` },
+              { label: 'درجة الأمان', value: ch.fraudScore, icon: ShieldCheck, color: ch.fraudScore >= 80 ? 'emerald' : ch.fraudScore >= 50 ? 'amber' : 'rose', format: (v: number) => `${v}/100` },
+            ].map((stat) => {
+              const Icon = stat.icon;
+              return (
+                <div key={stat.label} className={cn(
+                  'rounded-2xl p-5 border relative overflow-hidden group',
+                  stat.color === 'indigo' ? 'bg-indigo-50/50 border-indigo-100' :
+                  stat.color === 'emerald' ? 'bg-emerald-50/50 border-emerald-100' :
+                  stat.color === 'amber' ? 'bg-amber-50/50 border-amber-100' :
+                  'bg-rose-50/50 border-rose-100'
+                )}>
+                  <div className="flex items-center justify-between mb-3 relative z-10">
+                    <p className="text-xs font-bold text-slate-500">{stat.label}</p>
+                    <Icon className={cn("w-5 h-5 opacity-50", 
+                      stat.color === 'indigo' ? 'text-indigo-600' :
+                      stat.color === 'emerald' ? 'text-emerald-600' :
+                      stat.color === 'amber' ? 'text-amber-600' : 'text-rose-600'
+                    )} />
+                  </div>
+                  <p className={cn('text-3xl font-black relative z-10',
+                    stat.color === 'indigo' ? 'text-indigo-900' :
+                    stat.color === 'emerald' ? 'text-emerald-900' :
+                    stat.color === 'amber' ? 'text-amber-900' : 'text-rose-900'
+                  )}>{stat.format(stat.value)}</p>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              );
+            })}
+          </div>
 
-          {/* Recent Orders */}
-          {data.recentOrders && data.recentOrders.length > 0 && (
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm">آخر الطلبات</CardTitle>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            {/* Risk Progress Bar Card */}
+            <Card className="lg:col-span-1 border-slate-200/60 shadow-[0_4px_20px_rgb(0,0,0,0.02)] rounded-2xl h-max">
+              <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-4 rounded-t-2xl">
+                <CardTitle className="text-base font-bold text-slate-800">تفاصيل الخطر و IPs</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {data.recentOrders.map((order, i) => (
-                    <div key={i} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center">
-                          <Package className="w-4 h-4 text-slate-500" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-mono font-medium text-slate-800">{order.orderNumber}</p>
-                          {order.createdAt && (
-                            <p className="text-[10px] text-muted-foreground">{formatDateShort(order.createdAt)}</p>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {order.fraudAnalysis && (
-                          <FraudBadge fraudAnalysis={order.fraudAnalysis as Parameters<typeof FraudBadge>[0]['fraudAnalysis']} showScore />
-                        )}
-                        {order.status && (
-                          <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium', STATUS_COLORS[order.status] || 'bg-slate-100 text-slate-600')}>
-                            {STATUS_LABELS[order.status] || order.status}
-                          </span>
-                        )}
-                        {order.totalAmount !== undefined && (
-                          <span className="text-sm font-bold text-slate-900 whitespace-nowrap">{formatCurrency(order.totalAmount)}</span>
-                        )}
-                      </div>
+              <CardContent className="pt-6 space-y-6">
+                <div>
+                  <div className="flex justify-between text-sm mb-2">
+                    <span className="font-bold text-slate-600">مؤشر الثقة</span>
+                    <span className="font-black text-slate-900">{ch.fraudScore} من 100</span>
+                  </div>
+                  <Progress
+                    value={ch.fraudScore}
+                    className={cn('h-3 bg-slate-100',
+                      ch.fraudScore >= 80 ? '[&>div]:bg-emerald-500' :
+                      ch.fraudScore >= 50 ? '[&>div]:bg-amber-500' :
+                      '[&>div]:bg-rose-500'
+                    )}
+                  />
+                </div>
+
+                <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 space-y-3">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-semibold text-slate-500">حالة الحظر:</span>
+                    <span className={cn('font-bold flex items-center gap-1.5', ch.isBlacklisted ? 'text-rose-600' : 'text-emerald-600')}>
+                      {ch.isBlacklisted ? <><ShieldAlert className="w-4 h-4"/> محظور عالمياً</> : <><ShieldCheck className="w-4 h-4"/> سليم</>}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm pt-2 border-t border-slate-200/60">
+                    <span className="font-semibold text-slate-500">الأجهزة (IPs):</span>
+                    <span className="font-bold text-slate-900">{ch.knownIps.length} عنوان مسجل</span>
+                  </div>
+                  
+                  {ch.knownIps.length > 0 && (
+                    <div className="flex flex-wrap gap-2 pt-2">
+                      {ch.knownIps.map((ip) => (
+                        <span key={ip} className="font-mono text-[11px] font-medium bg-white border border-slate-200 text-slate-600 px-2 py-1 rounded-md shadow-sm" dir="ltr">{ip}</span>
+                      ))}
                     </div>
-                  ))}
+                  )}
                 </div>
               </CardContent>
             </Card>
-          )}
+
+            {/* Recent Orders Card */}
+            <Card className="lg:col-span-2 border-slate-200/60 shadow-[0_4px_20px_rgb(0,0,0,0.02)] rounded-2xl overflow-hidden">
+              <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-4">
+                <CardTitle className="text-base font-bold text-slate-800 flex items-center gap-2">
+                  <History className="w-5 h-5 text-slate-400" /> آخر طلبات العميل
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                {data.recentOrders && data.recentOrders.length > 0 ? (
+                  <div className="divide-y divide-slate-100">
+                    {data.recentOrders.map((order, i) => (
+                      <div key={i} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-slate-50/50 transition-colors gap-4 sm:gap-0">
+                        <div className="flex items-center gap-3.5">
+                          <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center border border-indigo-100 shrink-0">
+                            <Package className="w-5 h-5 text-indigo-500" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-mono font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded inline-block mb-1">{order.orderNumber}</p>
+                            {order.createdAt && (
+                              <p className="text-[11px] font-medium text-slate-500">{formatDateShort(order.createdAt)}</p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          {order.fraudAnalysis && (
+                            <FraudBadge fraudAnalysis={order.fraudAnalysis as Parameters<typeof FraudBadge>[0]['fraudAnalysis']} showScore />
+                          )}
+                          {order.status && (
+                            <span className={cn('text-xs px-2.5 py-1 rounded-lg font-bold border whitespace-nowrap', STATUS_COLORS[order.status] || 'bg-slate-100 text-slate-600 border-slate-200')}>
+                              {STATUS_LABELS[order.status] || order.status}
+                            </span>
+                          )}
+                          {order.totalAmount !== undefined && (
+                            <span className="text-sm font-black text-slate-900 whitespace-nowrap w-24 text-left">
+                              {formatCurrency(order.totalAmount)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-10 text-center">
+                    <p className="text-sm font-medium text-slate-500">لا توجد طلبات سريعة العرض لهذا العميل.</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+          </div>
         </div>
       )}
     </div>

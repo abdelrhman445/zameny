@@ -76,7 +76,8 @@ export const useCartStore = create<CartState>()(
       },
     }),
     {
-      name: 'aee-cart',
+      // ✅ التعديل هنا
+      name: 'zameny-cart',
     }
   )
 );

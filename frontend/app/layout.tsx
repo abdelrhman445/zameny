@@ -1,6 +1,14 @@
 import type { Metadata } from 'next';
+import { Cairo } from 'next/font/google';
 import { Toaster } from 'sonner';
 import './globals.css';
+
+// تحميل الخط باحترافية لتسريع الموقع ومنع الـ Layout Shift
+const cairo = Cairo({ 
+  subsets: ['arabic', 'latin'],
+  weight: ['300', '400', '500', '600', '700', '800'],
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: {
@@ -17,22 +25,31 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ar" dir="rtl">
+    // ربط الخط بـ html بالكامل
+    <html lang="ar" dir="rtl" className={cairo.className}>
       <head>
-        <link
-          href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&family=Syne:wght@400;500;600;700;800&display=swap"
-          rel="stylesheet"
-        />
+        {/* تم حذف الـ link القديم لأن Next.js سيتولى أمر الخطوط الآن */}
       </head>
-      <body className="min-h-screen bg-background font-arabic antialiased">
+      <body className="min-h-screen bg-[#030712] text-slate-50 antialiased selection:bg-rose-500/30">
+        
         {children}
+        
+        {/* تخصيص شكل الإشعارات لتبدو فخمة وزجاجية */}
         <Toaster
           position="top-center"
           richColors
+          theme="dark"
           toastOptions={{
-            style: { fontFamily: 'Cairo, sans-serif' },
+            style: { 
+              fontFamily: 'inherit',
+              background: 'rgba(15, 23, 42, 0.8)', // خلفية زجاجية غامقة
+              backdropFilter: 'blur(12px)',        // تأثير الزجاج
+              border: '1px solid rgba(30, 41, 59, 0.8)',
+              color: '#f8fafc'
+            },
           }}
         />
+        
       </body>
     </html>
   );

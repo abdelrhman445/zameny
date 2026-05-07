@@ -2,52 +2,73 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+/* تم إزالة @import للخطوط من هنا لأننا 
+  نقوم بتحميلها باحترافية عبر next/font/google في ملف layout.tsx 
+*/
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222 47% 11%;
+    /* Zameny Light Theme - Slate 50 Background */
+    --background: 210 40% 98%; 
+    --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    --primary: 222 89% 20%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
-    --accent: 346 86% 61%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 222 89% 20%;
-    --radius: 0.6rem;
+    --popover-foreground: 222.2 84% 4.9%;
+    
+    /* Zameny Primary (Indigo 600) */
+    --primary: 238 84% 67%;
+    --primary-foreground: 210 40% 98%;
+    
+    /* Zameny Secondary (Slate 100) */
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    
+    /* Zameny Accent / Destructive (Rose 500) */
+    --accent: 343 85% 60%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 343 85% 60%;
+    --destructive-foreground: 210 40% 98%;
+    
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    
+    /* Focus Ring (Indigo 600) */
+    --ring: 238 84% 67%;
+    
+    /* Premium Curves for Shadcn Components */
+    --radius: 0.75rem; 
   }
 
   .dark {
-    --background: 222 47% 7%;
-    --foreground: 213 31% 91%;
-    --card: 222 47% 10%;
-    --card-foreground: 213 31% 91%;
-    --popover: 222 47% 10%;
-    --popover-foreground: 213 31% 91%;
-    --primary: 210 100% 66%;
-    --primary-foreground: 222 47% 7%;
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 213 31% 91%;
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 346 86% 61%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 217 33% 20%;
-    --input: 217 33% 20%;
-    --ring: 210 100% 66%;
+    /* Zameny Dark Theme - Slate 950 Background */
+    --background: 224 71% 4%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    
+    --primary: 238 84% 67%;
+    --primary-foreground: 210 40% 98%;
+    
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    
+    --accent: 343 85% 60%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 343 85% 60%;
+    --destructive-foreground: 210 40% 98%;
+    
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 238 84% 67%;
   }
 }
 
@@ -58,59 +79,33 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Cairo', 'Syne', system-ui, sans-serif;
-  }
-
-  /* Arabic-first direction support */
-  [dir="rtl"] {
-    font-family: 'Cairo', system-ui, sans-serif;
+    /* الاعتماد على الخطوط القادمة من Next.js (Cairo) */
+    font-family: inherit; 
   }
 }
 
 @layer components {
-  /* Dashboard sidebar styles */
+  /* ── Dashboard Sidebar Styles (Premium) ── */
   .sidebar-link {
-    @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
-           text-slate-600 hover:text-slate-900 hover:bg-slate-100
-           transition-all duration-150 cursor-pointer;
+    @apply flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-bold
+           text-slate-500 hover:text-slate-900 hover:bg-slate-100/80
+           transition-all duration-200 cursor-pointer;
   }
 
   .sidebar-link.active {
-    @apply text-white bg-slate-900 hover:bg-slate-800 hover:text-white;
+    @apply text-indigo-600 bg-indigo-50 hover:bg-indigo-100 hover:text-indigo-700 shadow-sm border border-indigo-100/50;
   }
 
-  /* Fraud badge styles */
-  .fraud-badge-low {
-    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold
-           bg-emerald-50 text-emerald-700 border border-emerald-200;
-  }
-
-  .fraud-badge-medium {
-    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold
-           bg-amber-50 text-amber-700 border border-amber-200;
-  }
-
-  .fraud-badge-high {
-    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold
-           bg-red-50 text-red-700 border border-red-200;
-  }
-
-  /* Skeleton shimmer */
-  .skeleton {
-    @apply bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200
-           bg-[length:200%_100%] animate-shimmer rounded;
-  }
-
-  /* Glass card effect */
+  /* ── Glass Card Effect ── */
   .glass-card {
-    @apply bg-white/80 backdrop-blur-sm border border-white/50 shadow-sm;
+    @apply bg-white/70 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)];
   }
 
-  /* AEE branded button */
-  .btn-aee {
-    @apply bg-slate-900 text-white hover:bg-slate-800 
-           active:scale-[0.98] transition-all duration-150
-           rounded-lg px-4 py-2.5 font-semibold text-sm;
+  /* ── Zameny Branded Button ── */
+  .btn-zameny {
+    @apply bg-indigo-600 text-white hover:bg-indigo-700 
+           active:scale-[0.98] transition-all duration-200
+           rounded-xl px-6 py-3 font-bold text-sm shadow-lg shadow-indigo-600/20;
   }
 }
 
@@ -119,14 +114,15 @@
     text-wrap: balance;
   }
 
-  /* Scrollbar styles */
+  /* ── Elegant Scrollbar Styles ── */
   .scrollbar-thin {
     scrollbar-width: thin;
-    scrollbar-color: hsl(var(--border)) transparent;
+    scrollbar-color: #cbd5e1 transparent;
   }
 
   .scrollbar-thin::-webkit-scrollbar {
     width: 6px;
+    height: 6px;
   }
 
   .scrollbar-thin::-webkit-scrollbar-track {
@@ -134,7 +130,12 @@
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background-color: hsl(var(--border));
-    border-radius: 3px;
+    background-color: #cbd5e1;
+    border-radius: 10px;
+    transition: background-color 0.2s;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background-color: #94a3b8;
   }
 }

@@ -39,7 +39,8 @@ export const useAuthStore = create<AuthState>()(
       },
     }),
     {
-      name: 'aee-auth',
+      // ✅ التعديل هنا
+      name: 'zameny-auth',
       partialize: (state) => ({ merchant: state.merchant, token: state.token }),
     }
   )

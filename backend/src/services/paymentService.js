@@ -7,6 +7,7 @@
  */
 
 const axios = require('axios');
+const crypto = require('crypto');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const AppError = require('../utils/appError');
 const logger = require('../config/logger');
@@ -64,7 +65,8 @@ const _generateStripeLink = async (aeeOrder) => {
 
   return { 
     paymentUrl: session.url, 
-    gatewayOrderId: session.id,
+    // ✅ FIX: تم توحيد اسم المفتاح — stripeSessionId بدل gatewayOrderId
+    stripeSessionId: session.id,
     expiresAt: new Date(Date.now() + 30 * 60 * 1000) 
   };
 };
@@ -106,7 +108,8 @@ const _generatePaymobLink = async (aeeOrder) => {
 
   return {
     paymentUrl: `${PAYMOB_IFRAME_BASE}/${process.env.PAYMOB_IFRAME_ID}?payment_token=${pmKey.token}`,
-    gatewayOrderId: pmOrder.id,
+    // ✅ FIX: تم توحيد اسم المفتاح — paymobOrderId
+    paymobOrderId: pmOrder.id,
     expiresAt: new Date(Date.now() + 30 * 60 * 1000)
   };
 };
@@ -135,4 +138,46 @@ const generatePaymentLink = async (aeeOrder) => {
   }
 };
 
-module.exports = { generatePaymentLink };
+// ── [PAYMOB HMAC VERIFICATION] ──────────────────────────────────────────────
+// ✅ FIX: إضافة دالة التحقق من HMAC الناقصة وتصديرها
+
+/**
+ * يتحقق من صحة HMAC الواصل من Paymob
+ * @param {Object} data - بيانات الـ Callback
+ * @param {string} receivedHmac - الـ HMAC المرسل من Paymob
+ * @returns {boolean}
+ */
+const verifyPaymobHmac = (data, receivedHmac) => {
+  const secret = process.env.PAYMOB_HMAC_SECRET;
+  if (!secret) return false;
+
+  // الـ Fields اللي Paymob بيستخدمها في حساب الـ HMAC بالترتيب
+  const hmacFields = [
+    'amount_cents', 'created_at', 'currency', 'error_occured',
+    'has_parent_transaction', 'id', 'integration_id', 'is_3d_secure',
+    'is_auth', 'is_capture', 'is_refunded', 'is_standalone_payment',
+    'is_voided', 'order', 'owner', 'pending', 'source_data.pan',
+    'source_data.sub_type', 'source_data.type', 'success'
+  ];
+
+  const concatenated = hmacFields
+    .map((field) => {
+      // Handle nested fields like 'source_data.pan'
+      const keys = field.split('.');
+      let value = data;
+      for (const key of keys) {
+        value = value?.[key];
+      }
+      return value ?? '';
+    })
+    .join('');
+
+  const computedHmac = crypto
+    .createHmac('sha512', secret)
+    .update(concatenated)
+    .digest('hex');
+
+  return computedHmac === receivedHmac;
+};
+
+module.exports = { generatePaymentLink, verifyPaymobHmac };

@@ -1,13 +1,14 @@
 'use client';
+
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Eye, EyeOff, Zap, ArrowLeft, Mail, Lock } from 'lucide-react';
+import { Eye, EyeOff, Zap, ArrowLeft, Mail, Lock, Sparkles, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuthStore } from '@/store/useAuthStore';
-import api, { setToken } from '@/lib/api';
+import api from '@/lib/api';
 import { AuthResponse } from '@/types';
 import { toast } from 'sonner';
 
@@ -38,127 +39,151 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex" dir="rtl">
-      {/* Left Panel - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-12 flex-col justify-between relative overflow-hidden">
-        {/* Decorative circles */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-rose-600/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-600/10 rounded-full translate-y-1/2 -translate-x-1/2" />
+    <div className="min-h-screen bg-[#030712] flex text-slate-50 selection:bg-rose-500/30 overflow-hidden" dir="rtl">
+      
+      {/* ── Left Panel (Branding) ── */}
+      <div className="hidden lg:flex lg:w-1/2 relative flex-col justify-between p-14 border-l border-slate-800/50 bg-slate-900/20">
+        {/* Glow Effects */}
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-rose-600/15 blur-[120px] rounded-full mix-blend-screen pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-indigo-600/10 blur-[120px] rounded-full mix-blend-screen pointer-events-none" />
+        <div className="absolute inset-0 opacity-[0.04] mix-blend-overlay pointer-events-none" style={{ backgroundImage: "url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E')" }}></div>
 
         <div className="relative z-10">
-          <div className="flex items-center gap-3 mb-12">
-            <div className="w-10 h-10 rounded-xl bg-rose-600 flex items-center justify-center">
-              <Zap className="w-5 h-5 text-white" />
+          <Link href="/" className="inline-flex items-center gap-3 mb-16 hover:opacity-80 transition-opacity">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-rose-500 to-rose-700 flex items-center justify-center shadow-lg shadow-rose-500/20">
+              <Zap className="w-6 h-6 text-white" />
             </div>
             <div>
-              <p className="text-white font-bold text-lg leading-none">A.E.E</p>
-              <p className="text-slate-400 text-xs">Advanced E-commerce Engine</p>
+              <p className="text-white font-black text-xl tracking-tight">Zameny</p>
+              <p className="text-slate-400 text-xs font-medium uppercase tracking-wider">Advanced E-commerce Engine</p>
             </div>
-          </div>
+          </Link>
 
-          <h1 className="text-4xl font-bold text-white leading-tight mb-4">
-            منصة التجارة<br />
-            <span className="text-rose-500">الأكثر ذكاءً</span><br />
-            في مصر
+          
+
+          <h1 className="text-5xl font-black text-white leading-[1.2] mb-6 tracking-tight">
+            لوحة تحكم<br />
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-rose-400 to-purple-500">
+              التجارة الذكية.
+            </span>
           </h1>
-          <p className="text-slate-400 text-base leading-relaxed max-w-sm">
-            محرك كشف الاحتيال المدمج يحمي متجرك من طلبات الإرجاع المزيفة ويرفع نسبة التسليم.
+          <p className="text-slate-400 text-lg leading-relaxed max-w-md font-medium">
+            تابع مبيعاتك لحظة بلحظة، احمِ متجرك من الإرجاع الوهمي، وأدر مخزونك بذكاء من مكان واحد.
           </p>
         </div>
 
-        <div className="relative z-10 grid grid-cols-3 gap-4">
+        {/* Premium Stats Glass Cards */}
+        <div className="relative z-10 grid grid-cols-3 gap-5">
           {[
-            { value: '98%', label: 'نسبة التسليم' },
-            { value: '0.3s', label: 'تحليل الاحتيال' },
-            { value: '24/7', label: 'تنبيهات فورية' },
+            { value: '99.9%', label: 'دقة الحماية' },
+            { value: '< 1s', label: 'سرعة التحليل' },
+            { value: '24/7', label: 'مراقبة آلية' },
           ].map((stat) => (
-            <div key={stat.value} className="bg-white/5 rounded-xl p-4 text-center">
-              <p className="text-2xl font-bold text-white">{stat.value}</p>
-              <p className="text-xs text-slate-400 mt-1">{stat.label}</p>
+            <div key={stat.value} className="bg-white/[0.02] backdrop-blur-xl border border-white/[0.05] rounded-2xl p-5 text-center hover:-translate-y-1 transition-transform duration-300 shadow-2xl">
+              <p className="text-3xl font-black bg-clip-text text-transparent bg-gradient-to-b from-white to-slate-400 mb-1">{stat.value}</p>
+              <p className="text-xs font-medium text-slate-400">{stat.label}</p>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Right Panel - Form */}
-      <div className="flex-1 flex items-center justify-center p-6 lg:p-12">
-        <div className="w-full max-w-md space-y-8">
+      {/* ── Right Panel (Form) ── */}
+      <div className="flex-1 flex items-center justify-center p-6 lg:p-12 relative z-10">
+        <div className="w-full max-w-[420px] space-y-8">
+          
           {/* Mobile logo */}
-          <div className="flex items-center gap-2 lg:hidden">
-            <div className="w-8 h-8 rounded-lg bg-rose-600 flex items-center justify-center">
-              <Zap className="w-4 h-4 text-white" />
+          <div className="flex items-center gap-3 lg:hidden mb-10">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-500 to-rose-700 flex items-center justify-center shadow-lg shadow-rose-500/20">
+              <Zap className="w-5 h-5 text-white" />
             </div>
-            <span className="text-white font-bold">A.E.E</span>
+            <span className="text-white font-black text-2xl tracking-tight">Zameny</span>
           </div>
 
           <div>
-            <h2 className="text-2xl font-bold text-white">تسجيل الدخول</h2>
-            <p className="text-slate-400 mt-1 text-sm">مرحباً بعودتك إلى لوحة التحكم</p>
+            <h2 className="text-3xl font-black text-white mb-2">مرحباً بعودتك</h2>
+            <p className="text-slate-400 text-base">قم بتسجيل الدخول للوصول إلى متجرك</p>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-5">
-            <div className="space-y-1.5">
-              <Label htmlFor="email" className="text-slate-300">البريد الإلكتروني</Label>
-              <div className="relative">
-                <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+          <form onSubmit={handleLogin} className="space-y-6">
+            
+            {/* Email Field */}
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-sm font-semibold text-slate-300">البريد الإلكتروني</Label>
+              <div className="relative group" dir="ltr">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Mail className="w-5 h-5 text-slate-500 group-focus-within:text-rose-500 transition-colors" />
+                </div>
                 <Input
                   id="email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="ahmed@mystore.com"
-                  dir="ltr"
-                  className="pr-9 bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 focus-visible:ring-rose-500"
+                  placeholder="admin@mystore.com"
+                  className="h-14 pl-11 pr-4 bg-[#0a0f1c] border-slate-800 text-white placeholder:text-slate-600 focus-visible:ring-1 focus-visible:ring-rose-500 focus-visible:border-rose-500 rounded-xl text-base transition-all"
                   autoComplete="email"
                 />
               </div>
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="password" className="text-slate-300">كلمة المرور</Label>
-              <div className="relative">
-                <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+            {/* Password Field */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password" className="text-sm font-semibold text-slate-300">كلمة المرور</Label>
+                <Link href="#" className="text-xs font-medium text-rose-500 hover:text-rose-400 transition-colors">
+                  نسيت كلمة المرور؟
+                </Link>
+              </div>
+              <div className="relative group" dir="ltr">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Lock className="w-5 h-5 text-slate-500 group-focus-within:text-rose-500 transition-colors" />
+                </div>
                 <Input
                   id="password"
                   type={showPw ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  dir="ltr"
-                  className="pr-9 pl-9 bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 focus-visible:ring-rose-500"
+                  className="h-14 pl-11 pr-12 bg-[#0a0f1c] border-slate-800 text-white placeholder:text-slate-600 focus-visible:ring-1 focus-visible:ring-rose-500 focus-visible:border-rose-500 rounded-xl text-base transition-all tracking-widest"
                   autoComplete="current-password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPw(!showPw)}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-500 hover:text-slate-300 transition-colors"
                 >
-                  {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showPw ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
             </div>
 
-            <Button type="submit" className="w-full h-11 bg-rose-600 hover:bg-rose-700 text-white font-semibold" disabled={loading}>
+            {/* Submit Button */}
+            <Button 
+              type="submit" 
+              className="w-full h-14 bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white font-bold text-lg rounded-xl shadow-[0_0_20px_rgba(225,29,72,0.2)] hover:shadow-[0_0_30px_rgba(225,29,72,0.4)] transition-all flex items-center justify-center gap-2" 
+              disabled={loading}
+            >
               {loading ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  جاري الدخول...
-                </div>
+                <>
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span>جاري الدخول...</span>
+                </>
               ) : (
-                <div className="flex items-center gap-2">
-                  تسجيل الدخول
-                  <ArrowLeft className="w-4 h-4" />
-                </div>
+                <>
+                  <span>دخول للوحة التحكم</span>
+                  <Activity className="w-5 h-5 opacity-80" />
+                </>
               )}
             </Button>
           </form>
 
-          <p className="text-center text-sm text-slate-500">
-            ليس لديك حساب؟{' '}
-            <Link href="/register" className="text-rose-500 hover:text-rose-400 font-medium">
-              إنشاء متجر جديد
+          {/* Footer Link */}
+          <p className="text-center text-sm font-medium text-slate-500 pt-4">
+            ليس لديك متجر بعد؟{' '}
+            <Link href="/register" className="text-rose-500 hover:text-rose-400 transition-colors">
+              ابدأ مجاناً الآن
             </Link>
           </p>
+
         </div>
       </div>
     </div>

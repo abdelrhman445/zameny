@@ -7,6 +7,7 @@ const {
   resendOtp,
   getOrders,
   getOrder,
+  getOrderPublic,
   updateOrderStatus,
   getCustomerProfile,
   getOrderStats,
@@ -18,7 +19,10 @@ const {
   updateStatusValidation,
 } = require('../../validations/order.validation');
 
-// All order routes protected
+// ✅ FIX: مسار عام للعميل لمتابعة طلبه بدون auth — لازم يكون قبل router.use(protect)
+router.get('/:id/public', getOrderPublic);
+
+// All order routes below are protected (require merchant JWT)
 router.use(protect);
 
 // Stats & analytics

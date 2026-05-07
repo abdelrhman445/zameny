@@ -12,6 +12,7 @@ const billingService  = require('../../services/billingService');
 const paymentService  = require('../../services/paymentService');
 const logger          = require('../../config/logger');
 const Order           = require('../../models/Order');
+
 // ── Telegram secret verification ─────────────────────────────────────────────
 const verifyTelegramSecret = (req, res, next) => {
   const secret         = req.headers['x-telegram-bot-api-secret-token'];
@@ -27,14 +28,12 @@ const verifyTelegramSecret = (req, res, next) => {
 // ─────────────────────────────────────────────────────────────────────────────
 // 🔥 دالة الربط مع الطيار الآلي
 // ─────────────────────────────────────────────────────────────────────────────
-// 🔥 تعديل الدالة لتقبل الـ io
 const fulfillEcommerceOrder = async (orderIdOrDoc, io) => {
   try {
     const orderId = typeof orderIdOrDoc === 'string' ? orderIdOrDoc : orderIdOrDoc._id;
     
     await confirmOrderInternal(orderId);
 
-    // 👇 ضيف الجزء ده هنا
     const updatedOrder = await Order.findById(orderId);
     if (io && updatedOrder) {
       io.to(orderId.toString()).emit('orderUpdated', updatedOrder);
@@ -84,9 +83,9 @@ router.post('/stripe', async (req, res) => {
           // 1. تشغيل الطيار الآلي (تحديث DB + مخزون + شحن)
           await confirmOrderInternal(orderId);
 
-          // 2. 👇 الجزء المفقود: بلّغ السوكيت فوراً
+          // 2. بلّغ السوكيت فوراً
           const io = req.app.get('socketio');
-          const updatedOrder = await Order.findById(orderId); // جلب البيانات الجديدة بعد تحديث الطيار الآلي
+          const updatedOrder = await Order.findById(orderId);
           
           if (io && updatedOrder) {
             io.to(orderId).emit('orderUpdated', updatedOrder);
@@ -103,7 +102,6 @@ router.post('/stripe', async (req, res) => {
     }
 
     // للمدفوعات الأخرى (مثل اشتراكات التجار SaaS)
-    // مرر السوكيت للخدمة عشان لو فيه تحديثات تخص اشتراكات التجار
     if (event.type.startsWith('invoice.') || event.type.startsWith('customer.')) {
       logger.info(`[Webhook/Stripe] Billing event received: ${event.type}`);
       try {
@@ -124,6 +122,7 @@ router.post('/stripe', async (req, res) => {
     res.status(err.statusCode || 500).json({ error: err.message });
   }
 });
+
 // ─────────────────────────────────────────────────────────────────────────────
 // GET|POST /api/v1/webhooks/paymob
 // ─────────────────────────────────────────────────────────────────────────────
@@ -132,6 +131,7 @@ const handlePaymobCallback = async (req, res) => {
     const data = { ...req.query, ...req.body };
     const hmac = data.hmac;
 
+    // ✅ FIX: التحقق من وجود verifyPaymobHmac قبل استدعائها
     if (process.env.PAYMOB_HMAC_SECRET && hmac) {
       const isValid = paymentService.verifyPaymobHmac(data, hmac);
       if (!isValid) {
@@ -166,7 +166,7 @@ const handlePaymobCallback = async (req, res) => {
 router.post('/telegram', verifyTelegramSecret, handleTelegramWebhook);
 router.get('/paymob',  handlePaymobCallback);
 router.post('/paymob', handlePaymobCallback);
-// حطه قبل الـ POST عشان نست ت بيه بالمتصفح
+// حطه قبل الـ POST عشان نقدر نتست بيه بالمتصفح
 router.get('/stripe', (req, res) => {
   res.send("✅ Webhook Path is Active! Send a POST request to test it properly.");
 });

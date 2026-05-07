@@ -1,6 +1,7 @@
 'use client';
+
 import React, { useState } from 'react';
-import { User, Mail, Store, Lock, Save, Eye, EyeOff } from 'lucide-react';
+import { User, Mail, Store, Lock, Save, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import api from '@/lib/api';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 export default function ProfilePage() {
   const { merchant, setMerchant } = useAuthStore();
@@ -34,7 +36,7 @@ export default function ProfilePage() {
       toast.success('تم تغيير كلمة المرور بنجاح');
       setPwForm({ currentPassword: '', newPassword: '' });
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } }).response?.data?.message || 'فشل تغيير كلمة المرور';
+      const msg = (err as { response?: { data?: { message?: string } } }).response?.data?.message || 'تعذر تغيير كلمة المرور، يرجى المحاولة لاحقاً';
       toast.error(msg);
     } finally {
       setSubmitting(false);
@@ -42,127 +44,170 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="space-y-6 max-w-2xl" dir="rtl">
+    <div className="space-y-8 max-w-3xl animate-fade-in pb-10" dir="rtl">
+      
+      {/* ── Header ── */}
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">الملف الشخصي</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">إدارة بيانات حسابك</p>
+        <h1 className="text-3xl font-black text-slate-900 tracking-tight">الملف الشخصي</h1>
+        <p className="text-sm font-medium text-slate-500 mt-1.5">
+          إدارة بيانات حسابك وتأمين تسجيل الدخول الخاص بمتجرك.
+        </p>
       </div>
 
-      {/* Merchant Info (read-only display) */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <User className="w-4 h-4" />
-            بيانات الحساب
+      {/* ── Merchant Info (Read-only) ── */}
+      <Card className="border-slate-200/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-2xl overflow-hidden">
+        <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-4">
+          <CardTitle className="text-lg font-bold text-slate-800 flex items-center gap-2">
+            <User className="w-5 h-5 text-indigo-500" />
+            البيانات الأساسية
           </CardTitle>
-          <CardDescription>معلومات حسابك الأساسية</CardDescription>
+          <CardDescription className="font-medium text-slate-500">
+            المعلومات المرتبطة بحسابك كتاجر على منصة Zameny.
+          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl">
-            <div className="w-12 h-12 rounded-xl bg-slate-900 flex items-center justify-center text-white text-lg font-bold flex-shrink-0">
-              {merchant?.name?.[0]?.toUpperCase()}
+        
+        <CardContent className="pt-6 space-y-6">
+          
+          {/* Avatar & Status Highlight */}
+          <div className="flex items-center gap-4 p-4 bg-white border border-slate-100 rounded-2xl shadow-sm">
+            <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-700 flex items-center justify-center text-white text-3xl font-black shadow-md shrink-0">
+              {merchant?.name?.[0]?.toUpperCase() || 'Z'}
             </div>
             <div>
-              <p className="font-semibold text-slate-900">{merchant?.name}</p>
-              <p className="text-sm text-muted-foreground">{merchant?.email}</p>
+              <p className="font-black text-xl text-slate-900 mb-1">{merchant?.name}</p>
+              <div className="flex items-center gap-2">
+                <span className={cn(
+                  'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border', 
+                  merchant?.isActive ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-rose-50 text-rose-600 border-rose-100'
+                )}>
+                  <span className={cn("w-1.5 h-1.5 rounded-full", merchant?.isActive ? "bg-emerald-500" : "bg-rose-500")} />
+                  {merchant?.isActive ? 'حساب نشط' : 'حساب موقوف'}
+                </span>
+              </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <User className="w-3.5 h-3.5" /> الاسم
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            {/* Name Field */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1.5 text-sm font-bold text-slate-600">
+                الاسم الكامل
               </Label>
-              <div className="h-10 px-3 rounded-lg border bg-muted/30 flex items-center text-sm text-slate-700">
+              <div className="h-12 px-4 rounded-xl border border-slate-200 bg-slate-50/50 flex items-center text-sm font-bold text-slate-900 select-none">
                 {merchant?.name}
               </div>
             </div>
-            <div className="space-y-1.5">
-              <Label className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <Mail className="w-3.5 h-3.5" /> البريد الإلكتروني
+
+            {/* Email Field */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1.5 text-sm font-bold text-slate-600">
+                البريد الإلكتروني
               </Label>
-              <div className="h-10 px-3 rounded-lg border bg-muted/30 flex items-center text-sm text-slate-700" dir="ltr">
+              <div className="h-12 px-4 rounded-xl border border-slate-200 bg-slate-50/50 flex items-center text-sm font-bold text-slate-900 select-none" dir="ltr">
                 {merchant?.email}
               </div>
             </div>
-            <div className="space-y-1.5 sm:col-span-2">
-              <Label className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <Store className="w-3.5 h-3.5" /> اسم المتجر
+
+            {/* Store Name Field */}
+            <div className="space-y-2 sm:col-span-2">
+              <Label className="flex items-center gap-1.5 text-sm font-bold text-slate-600">
+                اسم المتجر
               </Label>
-              <div className="h-10 px-3 rounded-lg border bg-muted/30 flex items-center text-sm text-slate-700">
+              <div className="h-12 px-4 rounded-xl border border-slate-200 bg-slate-50/50 flex items-center text-sm font-bold text-slate-900 select-none">
+                <Store className="w-4 h-4 text-slate-400 ml-2" />
                 {merchant?.storeName}
               </div>
+              <p className="text-xs font-medium text-slate-400 mt-1.5 flex items-center gap-1">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" /> هذه البيانات موثقة ولا يمكن تعديلها يدوياً لأغراض أمنية.
+              </p>
             </div>
-          </div>
-
-          <div className="pt-2 border-t">
-            <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-              <span className={`w-2 h-2 rounded-full ${merchant?.isActive ? 'bg-emerald-500' : 'bg-red-500'}`} />
-              الحساب {merchant?.isActive ? 'نشط' : 'غير نشط'}
-            </p>
           </div>
         </CardContent>
       </Card>
 
-      {/* Change Password */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Lock className="w-4 h-4" />
-            تغيير كلمة المرور
+      {/* ── Change Password ── */}
+      <Card className="border-slate-200/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-2xl overflow-hidden">
+        <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-4">
+          <CardTitle className="text-lg font-bold text-slate-800 flex items-center gap-2">
+            <Lock className="w-5 h-5 text-indigo-500" />
+            تأمين الحساب
           </CardTitle>
-          <CardDescription>يرجى استخدام كلمة مرور قوية تحتوي على أحرف وأرقام</CardDescription>
+          <CardDescription className="font-medium text-slate-500">
+            تحديث كلمة المرور الخاصة بتسجيل الدخول لمتجرك.
+          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="current-pw">كلمة المرور الحالية</Label>
-            <div className="relative">
+        
+        <CardContent className="pt-6 space-y-5">
+          {/* Current Password */}
+          <div className="space-y-2">
+            <Label htmlFor="current-pw" className="text-sm font-bold text-slate-700">كلمة المرور الحالية</Label>
+            <div className="relative group" dir="ltr">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Lock className="w-5 h-5 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+              </div>
               <Input
                 id="current-pw"
                 type={showCurrentPw ? 'text' : 'password'}
                 value={pwForm.currentPassword}
                 onChange={(e) => setPwForm({ ...pwForm, currentPassword: e.target.value })}
                 placeholder="••••••••"
-                dir="ltr"
+                autoComplete="off"
+                className="h-12 pl-11 pr-12 rounded-xl bg-white border-slate-200 focus-visible:ring-indigo-500 text-slate-900 font-bold font-mono tracking-widest text-lg transition-all"
               />
               <button
                 type="button"
                 onClick={() => setShowCurrentPw(!showCurrentPw)}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-slate-900"
+                className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
+                title={showCurrentPw ? "إخفاء" : "إظهار"}
               >
-                {showCurrentPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {showCurrentPw ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="new-pw">كلمة المرور الجديدة</Label>
-            <div className="relative">
+          {/* New Password */}
+          <div className="space-y-2">
+            <Label htmlFor="new-pw" className="text-sm font-bold text-slate-700">كلمة المرور الجديدة</Label>
+            <div className="relative group" dir="ltr">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Lock className="w-5 h-5 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+              </div>
               <Input
                 id="new-pw"
                 type={showNewPw ? 'text' : 'password'}
                 value={pwForm.newPassword}
                 onChange={(e) => setPwForm({ ...pwForm, newPassword: e.target.value })}
                 placeholder="••••••••"
-                dir="ltr"
+                autoComplete="off"
+                className="h-12 pl-11 pr-12 rounded-xl bg-white border-slate-200 focus-visible:ring-indigo-500 text-slate-900 font-bold font-mono tracking-widest text-lg transition-all"
               />
               <button
                 type="button"
                 onClick={() => setShowNewPw(!showNewPw)}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-slate-900"
+                className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
+                title={showNewPw ? "إخفاء" : "إظهار"}
               >
-                {showNewPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {showNewPw ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>
-            <p className="text-xs text-muted-foreground">8 أحرف على الأقل، تشمل حرف كبير وصغير ورقم</p>
+            <p className="text-xs font-medium text-slate-500 pt-1 leading-relaxed">
+              يجب أن تتكون من 8 أحرف على الأقل، ويفضل أن تحتوي على مزيج من الأحرف الكبيرة والصغيرة والأرقام.
+            </p>
           </div>
 
-          <Button onClick={handleChangePassword} disabled={submitting} className="w-full sm:w-auto">
-            <Save className="w-4 h-4 ml-1.5" />
-            {submitting ? 'جاري الحفظ...' : 'حفظ كلمة المرور'}
-          </Button>
+          <div className="pt-2">
+            <Button 
+              onClick={handleChangePassword} 
+              disabled={submitting} 
+              className="h-12 px-8 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-lg shadow-indigo-600/20 w-full sm:w-auto transition-all"
+            >
+              {submitting ? 'جاري التحديث...' : 'تحديث كلمة المرور'}
+              {!submitting && <Save className="w-4 h-4 ml-2" />}
+            </Button>
+          </div>
         </CardContent>
       </Card>
+      
     </div>
   );
 }

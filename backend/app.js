@@ -65,7 +65,7 @@ if (process.env.NODE_ENV === 'development') {
 // ─────────────────────────────────────────────────────────────────────────────
 
 // 1. Stripe Webhook (RAW BODY) - ضروري جداً للـ Signature Verification
-app.use('/api/v1/webhooks/stripe', express.raw({ type: 'application/json' }));
+app.use('/api/v1/webhooks/stripe', express.raw({ type: '*/*' }));
 
 // 2. باقي الويب هوكس
 app.use('/api/v1/webhooks/telegram', express.json()); // تليجرام بيحتاج JSON عادي

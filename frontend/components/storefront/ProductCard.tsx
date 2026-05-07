@@ -1,7 +1,7 @@
 'use client';
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { ShoppingCart, Package, Plus, Check } from 'lucide-react';
+import { ShoppingCart, Package, Check, Zap } from 'lucide-react';
 import { Product } from '@/types';
 import { formatCurrency, cn } from '@/lib/utils';
 import { useCartStore } from '@/store/useCartStore';
@@ -16,11 +16,13 @@ interface ProductCardProps {
 export default function ProductCard({ product, storeSlug }: ProductCardProps) {
   const { addItem, items } = useCartStore();
   const [added, setAdded] = useState(false);
-  const inCart = items.some((i) => i.productId === product._id);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation(); // ✅ مهم جداً: لمنع فتح صفحة المنتج عند الضغط على زرار السلة
+    
     if (!product.inStock) return;
+    
     addItem({
       productId: product._id,
       name: product.name,
@@ -28,59 +30,76 @@ export default function ProductCard({ product, storeSlug }: ProductCardProps) {
       quantity: 1,
       stockCount: product.stockCount,
     });
+    
     setAdded(true);
-    toast.success(`تمت إضافة "${product.name}" للعربة`);
+    toast.success(`تمت إضافة "${product.name}" إلى عربتك بنجاح`);
     setTimeout(() => setAdded(false), 2000);
   };
 
   return (
-    <Link href={`/${storeSlug}/product/${product._id}`} className="group block">
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-lg hover:border-slate-300 transition-all duration-200 group-hover:-translate-y-0.5">
-        {/* Product image placeholder */}
-        <div className="aspect-square bg-gradient-to-br from-slate-100 to-slate-50 flex items-center justify-center relative">
-          <Package className="w-12 h-12 text-slate-300" />
+    <Link href={`/${storeSlug}/product/${product._id}`} className="group block h-full">
+      <div className="bg-white h-full flex flex-col rounded-[1.5rem] border border-slate-200/60 overflow-hidden shadow-[0_4px_20px_rgb(0,0,0,0.02)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-1">
+        
+        {/* ── Product Image Area ── */}
+        <div className="aspect-[4/3] sm:aspect-square bg-gradient-to-br from-slate-100/80 via-slate-50 to-slate-100/50 flex items-center justify-center relative overflow-hidden">
+          <Package className="w-14 h-14 text-slate-300 transition-transform duration-700 group-hover:scale-110" />
+          
+          {/* Out of Stock Overlay */}
           {!product.inStock && (
-            <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
-              <span className="bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full">نفد المخزون</span>
+            <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center z-10">
+              <span className="bg-rose-500 text-white text-[11px] font-black px-4 py-2 rounded-xl shadow-lg shadow-rose-500/30 tracking-wider">
+                نفد المخزون
+              </span>
             </div>
           )}
+          
+          {/* Low Stock Badge */}
           {product.inStock && product.stockCount <= 5 && (
-            <span className="absolute top-2 right-2 bg-amber-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-              آخر {product.stockCount}!
+            <span className="absolute top-3 right-3 bg-white/90 backdrop-blur-md border border-amber-100 text-amber-600 text-[10px] font-black px-2.5 py-1.5 rounded-lg shadow-sm z-10 flex items-center gap-1.5">
+              <Zap className="w-3 h-3 fill-amber-500 text-amber-500" />
+              متبقي {product.stockCount} فقط
             </span>
           )}
         </div>
 
-        {/* Info */}
-        <div className="p-4 space-y-3">
+        {/* ── Product Info Area ── */}
+        <div className="p-4 sm:p-5 flex flex-col flex-1 gap-3">
           <div>
-            <h3 className="font-semibold text-slate-900 text-sm leading-tight line-clamp-2 group-hover:text-slate-700 transition-colors">
+            <h3 className="font-black text-slate-900 text-sm sm:text-base leading-snug line-clamp-2 group-hover:text-indigo-600 transition-colors">
               {product.name}
             </h3>
             {product.description && (
-              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{product.description}</p>
+              <p className="text-xs font-medium text-slate-500 mt-1.5 line-clamp-2 leading-relaxed">
+                {product.description}
+              </p>
             )}
           </div>
 
-          <div className="flex items-center justify-between gap-2">
-            <p className="font-bold text-slate-900 text-lg">{formatCurrency(product.price)}</p>
+          <div className="flex items-center justify-between gap-2 mt-auto pt-2">
+            <p className="font-black text-indigo-600 text-lg tracking-tighter">
+              {formatCurrency(product.price)}
+            </p>
+            
             <Button
-              size="sm"
+              size="icon"
               onClick={handleAddToCart}
               disabled={!product.inStock}
               className={cn(
-                'h-8 text-xs transition-all',
-                added ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-slate-900 hover:bg-slate-800'
+                'w-10 h-10 rounded-xl shadow-sm transition-all duration-300 active:scale-95 flex-shrink-0 border-0',
+                added 
+                  ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-emerald-200' 
+                  : 'bg-slate-900 hover:bg-indigo-600 text-white shadow-slate-200'
               )}
             >
               {added ? (
-                <Check className="w-3.5 h-3.5" />
+                <Check className="w-4.5 h-4.5 stroke-[3px]" />
               ) : (
-                <ShoppingCart className="w-3.5 h-3.5" />
+                <ShoppingCart className="w-4.5 h-4.5" />
               )}
             </Button>
           </div>
         </div>
+        
       </div>
     </Link>
   );

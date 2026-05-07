@@ -121,7 +121,7 @@ const createOrder = catchAsync(async (req, res, next) => {
 
   try {
     const resolvedItems = [];
-    let calculatedSubtotal = 0; // ✅ تغيير لتجميع المجموع الفرعي للمنتجات
+    let calculatedSubtotal = 0;
 
     for (const item of items) {
       if (!item.productId || !item.quantity || item.quantity < 1)
@@ -146,16 +146,14 @@ const createOrder = catchAsync(async (req, res, next) => {
       });
     }
 
-    // ✅ حساب المصاريف النهائية للأوردر
-    const shippingFee = 0; // يمكنك تغييرها مستقبلاً بناءً على المدينة
+    const shippingFee = 0;
     const totalAmount = calculatedSubtotal + shippingFee;
 
     const initialStatus   = fraudAnalysis.riskLevel === 'High' ? 'Flagged' : 'Pending';
     
-    // 👉 لو متأكد بفايربيز بيتعمل Paid فوراً، لو لأ بيمشي على النظام القديم Awaiting_OTP
+    // لو متأكد بفايربيز بيتعمل Paid فوراً، لو لأ بيمشي على النظام القديم Awaiting_OTP
     const initialPayStatus = paymentMethod === 'COD' ? (isFirebaseVerified ? 'Paid' : 'Awaiting_OTP') : 'Pending';
 
-    // ✅ تمرير الحسابات الدقيقة للـ Schema
     const [order] = await Order.create([{
       merchantId: req.merchant._id, 
       customerPhone: normalizedPhone,
@@ -165,9 +163,9 @@ const createOrder = catchAsync(async (req, res, next) => {
       customerEmail,
       customerIp: clientIp, 
       items: resolvedItems, 
-      subtotal: calculatedSubtotal, // تمرير المجموع الفرعي
-      shippingFee: shippingFee,     // تمرير مصاريف الشحن
-      totalAmount: totalAmount,     // الإجمالي النهائي
+      subtotal: calculatedSubtotal,
+      shippingFee: shippingFee,
+      totalAmount: totalAmount,
       status: initialStatus, 
       fraudAnalysis, 
       notes, 
@@ -196,7 +194,7 @@ const createOrder = catchAsync(async (req, res, next) => {
     // COD → send OTP
     if (paymentMethod === 'COD') {
       
-      // 👉 رد فايربيز الناجح (بيتخطى الكود القديم لو الرقم متأكد)
+      // رد فايربيز الناجح (بيتخطى الكود القديم لو الرقم متأكد)
       if (isFirebaseVerified) {
         return res.status(201).json({
           status: 'success',
@@ -221,13 +219,30 @@ const createOrder = catchAsync(async (req, res, next) => {
       });
     }
 
-    // Online → generate Paymob link
+    // Online → generate payment link
     let paymentData = {};
     try {
-      const { paymentUrl, paymobOrderId, expiresAt } =
-        await paymentService.generatePaymentLink({ ...order.toObject(), customerEmail });
-      Order.findByIdAndUpdate(order._id, { paymobOrderId, paymentLink: paymentUrl }).exec();
-      paymentData = { paymentUrl, paymobOrderId, paymentLinkExpiresAt: expiresAt };
+      const gateway = process.env.ACTIVE_PAYMENT_GATEWAY || 'STRIPE';
+      const paymentResult = await paymentService.generatePaymentLink({ ...order.toObject(), customerEmail });
+      
+      // ✅ FIX: حفظ بيانات بوابة الدفع في المسارات الصحيحة بالـ Schema
+      const updateFields = {
+        paymentLink: paymentResult.paymentUrl, // ✅ محفوظ في paymentDetails
+        'paymentDetails.gateway': gateway,
+      };
+
+      if (gateway === 'STRIPE' && paymentResult.stripeSessionId) {
+        updateFields['paymentDetails.stripeSessionId'] = paymentResult.stripeSessionId;
+      } else if (gateway === 'PAYMOB' && paymentResult.paymobOrderId) {
+        updateFields['paymentDetails.paymobOrderId'] = paymentResult.paymobOrderId;
+      }
+
+      Order.findByIdAndUpdate(order._id, updateFields).exec();
+
+      paymentData = { 
+        paymentUrl: paymentResult.paymentUrl, 
+        paymentLinkExpiresAt: paymentResult.expiresAt 
+      };
     } catch (e) {
       logger.error('[OrderController] Payment link failed:', { message: e.message });
     }
@@ -313,6 +328,17 @@ const getOrder = catchAsync(async (req, res, next) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// GET /api/v1/orders/:id/public  — للعميل (بدون auth) لمتابعة حالة طلبه
+// ─────────────────────────────────────────────────────────────────────────────
+const getOrderPublic = catchAsync(async (req, res, next) => {
+  const order = await Order.findById(req.params.id).select(
+    'orderNumber status paymentStatus paymentMethod totalAmount items customerName customerCity trackingNumber trackingUrl estimatedDelivery createdAt'
+  );
+  if (!order) return next(new AppError('Order not found.', 404));
+  res.status(200).json({ status: 'success', data: { order } });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // PATCH /api/v1/orders/:id/status
 // ─────────────────────────────────────────────────────────────────────────────
 const updateOrderStatus = catchAsync(async (req, res, next) => {
@@ -329,7 +355,7 @@ const updateOrderStatus = catchAsync(async (req, res, next) => {
     ));
   }
 
-  // ✅ استخدام الدالة الداخلية عند اختيار حالة Confirmed لتطبيق الأتمتة (مخزون + شحن)
+  // استخدام الدالة الداخلية عند اختيار حالة Confirmed لتطبيق الأتمتة (مخزون + شحن)
   if (status === 'Confirmed') {
     const updatedOrder = await confirmOrderInternal(order._id);
     return res.status(200).json({
@@ -421,7 +447,7 @@ const getOrderStats = catchAsync(async (req, res) => {
 
 module.exports = {
   createOrder, verifyCodOtp, resendOtp,
-  getOrders, getOrder, updateOrderStatus,
+  getOrders, getOrder, getOrderPublic, updateOrderStatus,
   confirmOrderInternal, 
   getCustomerProfile, getOrderStats,
 };

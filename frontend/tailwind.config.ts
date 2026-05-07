@@ -49,13 +49,13 @@ const config: Config = {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
-        // AEE Brand
-        aee: {
-          primary: '#1a1a2e',
-          accent: '#e94560',
-          gold: '#f5a623',
-          surface: '#16213e',
-          muted: '#0f3460',
+        // Zameny Premium Brand
+        zameny: {
+          primary: '#4f46e5',   // Indigo 600
+          accent: '#f43f5e',    // Rose 500
+          surface: '#030712',   // Slate 950 (Dark mode / Sidebar BG)
+          light: '#f8fafc',     // Slate 50 (Main Dashboard BG)
+          muted: '#64748b',     // Slate 500
         },
       },
       borderRadius: {
@@ -64,9 +64,9 @@ const config: Config = {
         sm: 'calc(var(--radius) - 4px)',
       },
       fontFamily: {
-        sans: ['var(--font-geist-sans)', 'system-ui', 'sans-serif'],
-        mono: ['var(--font-geist-mono)', 'monospace'],
-        arabic: ['Cairo', 'var(--font-geist-sans)', 'sans-serif'],
+        // جعل Cairo هو الخط الأساسي للمشروع بالكامل
+        sans: ['Cairo', 'system-ui', '-apple-system', 'sans-serif'],
+        mono: ['ui-monospace', 'monospace'],
       },
       keyframes: {
         'accordion-down': {
@@ -82,7 +82,12 @@ const config: Config = {
           '100%': { backgroundPosition: '200% 0' },
         },
         'fade-in': {
-          from: { opacity: '0', transform: 'translateY(8px)' },
+          from: { opacity: '0' },
+          to: { opacity: '1' },
+        },
+        // أنيميشن الصفحة الرئيسية الفخم
+        'fade-in-up': {
+          from: { opacity: '0', transform: 'translateY(20px)' },
           to: { opacity: '1', transform: 'translateY(0)' },
         },
         'slide-in': {
@@ -94,7 +99,8 @@ const config: Config = {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         shimmer: 'shimmer 2s linear infinite',
-        'fade-in': 'fade-in 0.3s ease-out',
+        'fade-in': 'fade-in 0.4s ease-out forwards',
+        'fade-in-up': 'fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards',
         'slide-in': 'slide-in 0.3s ease-out',
       },
     },
