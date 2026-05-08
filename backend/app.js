@@ -104,5 +104,12 @@ app.all('*', (req, res, next) => {
 
 // ── Global Error Handler ──────────────────────────────────────────────────
 app.use(errorHandler);
-
+app.get('/', (req, res) => {
+  res.status(200).json({
+    status: 'success',
+    message: 'Welcome to A.E.E Backend API 🚀',
+    environment: process.env.NODE_ENV,
+    timestamp: new Date().toISOString()
+  });
+});
 module.exports = app;
