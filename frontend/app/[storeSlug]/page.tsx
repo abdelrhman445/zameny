@@ -25,7 +25,8 @@ export default function StorefrontPage({ params }: PageProps) {
     const fetchProducts = async () => {
       try {
         const res = await api.get<ProductsResponse>('/products', {
-          params: { limit: 100, isActive: true },
+          // ✅ التعديل هنا: إضافة storeName للسيرفر عشان يعرف الزبون بيبحث في أنهي متجر
+          params: { limit: 100, isActive: true, storeName: storeSlug },
         });
         setProducts(res.data.data);
       } catch {
