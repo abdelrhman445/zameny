@@ -62,15 +62,24 @@ const confirmOrderInternal = async (orderId, session = null) => {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// POST /api/v1/orders   — Create order + trigger OTP or payment link
+// POST /api/v1/orders   — Create order + trigger OTP or payment link (Public)
 // ─────────────────────────────────────────────────────────────────────────────
 const createOrder = catchAsync(async (req, res, next) => {
   const {
+    storeName, // ✅ التعديل هنا: لازم الفرونت إند يبعت اسم المتجر
     customerPhone, customerName, customerAddress, customerCity,
     customerEmail, items, notes, paymentMethod = 'COD',
   } = req.body;
 
   const { fraudAnalysis, clientIp, normalizedPhone } = req;
+
+  // ✅ التأكد من وجود اسم المتجر والبحث عنه
+  if (!storeName) return next(new AppError('يجب تحديد اسم المتجر (storeName) لإتمام الطلب.', 400));
+  
+  const merchant = await Merchant.findOne({ 
+    storeName: { $regex: new RegExp(`^${storeName}$`, 'i') } 
+  });
+  if (!merchant) return next(new AppError('المتجر غير موجود.', 404));
 
   if (!items || !Array.isArray(items) || items.length === 0)
     return next(new AppError('Order must contain at least one item.', 400));
@@ -127,12 +136,13 @@ const createOrder = catchAsync(async (req, res, next) => {
       if (!item.productId || !item.quantity || item.quantity < 1)
         throw new AppError('Each item must have a valid productId and quantity >= 1.', 400);
 
+      // ✅ التعديل هنا: استخدام merchant._id بدلاً من req.merchant._id
       const product = await Product.findOne({
-        _id: item.productId, merchantId: req.merchant._id, isActive: true,
+        _id: item.productId, merchantId: merchant._id, isActive: true,
       }).session(session);
 
       if (!product)
-        throw new AppError(`Product "${item.productId}" not found or does not belong to your store.`, 404);
+        throw new AppError(`Product "${item.productId}" not found or does not belong to this store.`, 404);
 
       const itemSubtotal = product.price * item.quantity;
       calculatedSubtotal += itemSubtotal;
@@ -154,8 +164,9 @@ const createOrder = catchAsync(async (req, res, next) => {
     // لو متأكد بفايربيز بيتعمل Paid فوراً، لو لأ بيمشي على النظام القديم Awaiting_OTP
     const initialPayStatus = paymentMethod === 'COD' ? (isFirebaseVerified ? 'Paid' : 'Awaiting_OTP') : 'Pending';
 
+    // ✅ التعديل هنا: استخدام merchant._id بدلاً من req.merchant._id
     const [order] = await Order.create([{
-      merchantId: req.merchant._id, 
+      merchantId: merchant._id, 
       customerPhone: normalizedPhone,
       customerName, 
       customerAddress, 
@@ -185,8 +196,8 @@ const createOrder = catchAsync(async (req, res, next) => {
     logger.info(`[OrderController] Order ${order.orderNumber} created. Method: ${paymentMethod}. Risk: ${fraudAnalysis.riskLevel}`);
 
     // Telegram notification (non-fatal)
-    const merchant = await Merchant.findById(req.merchant._id);
-    if (merchant?.telegramChatId) {
+    // ✅ التعديل هنا: استخدمنا merchant اللي استدعيناه فوق جاهز
+    if (merchant.telegramChatId) {
       const messageId = await sendOrderNotification(merchant.telegramChatId, order).catch(() => null);
       if (messageId) Order.findByIdAndUpdate(order._id, { telegramMessageId: messageId }).exec();
     }
@@ -225,9 +236,8 @@ const createOrder = catchAsync(async (req, res, next) => {
       const gateway = process.env.ACTIVE_PAYMENT_GATEWAY || 'STRIPE';
       const paymentResult = await paymentService.generatePaymentLink({ ...order.toObject(), customerEmail });
       
-      // ✅ FIX: حفظ بيانات بوابة الدفع في المسارات الصحيحة بالـ Schema
       const updateFields = {
-        paymentLink: paymentResult.paymentUrl, // ✅ محفوظ في paymentDetails
+        paymentLink: paymentResult.paymentUrl, 
         'paymentDetails.gateway': gateway,
       };
 
@@ -262,13 +272,14 @@ const createOrder = catchAsync(async (req, res, next) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// POST /api/v1/orders/:id/verify-otp   — COD OTP verification
+// POST /api/v1/orders/:id/verify-otp   — COD OTP verification (Public)
 // ─────────────────────────────────────────────────────────────────────────────
 const verifyCodOtp = catchAsync(async (req, res, next) => {
   const { otp } = req.body;
   if (!otp) return next(new AppError('OTP code is required.', 400));
 
-  const order = await Order.findOne({ _id: req.params.id, merchantId: req.merchant._id });
+  // ✅ التعديل هنا: شلنا req.merchant._id لأن العميل هو اللي بيأكد
+  const order = await Order.findById(req.params.id);
   if (!order) return next(new AppError('Order not found.', 404));
   if (order.paymentMethod !== 'COD') return next(new AppError('OTP verification is only for COD orders.', 400));
   if (order.paymentStatus === 'Paid') return next(new AppError('Order has already been verified.', 400));
@@ -284,10 +295,11 @@ const verifyCodOtp = catchAsync(async (req, res, next) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// POST /api/v1/orders/:id/resend-otp
+// POST /api/v1/orders/:id/resend-otp (Public)
 // ─────────────────────────────────────────────────────────────────────────────
 const resendOtp = catchAsync(async (req, res, next) => {
-  const order = await Order.findOne({ _id: req.params.id, merchantId: req.merchant._id });
+  // ✅ التعديل هنا: شلنا req.merchant._id
+  const order = await Order.findById(req.params.id);
   if (!order) return next(new AppError('Order not found.', 404));
   if (order.paymentMethod !== 'COD') return next(new AppError('OTP is only for COD orders.', 400));
   if (order.paymentStatus === 'Paid') return next(new AppError('Order is already verified.', 400));
@@ -297,7 +309,7 @@ const resendOtp = catchAsync(async (req, res, next) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GET /api/v1/orders
+// GET /api/v1/orders (Protected - for Merchant)
 // ─────────────────────────────────────────────────────────────────────────────
 const getOrders = catchAsync(async (req, res) => {
   const page  = Math.max(1, parseInt(req.query.page) || 1);
@@ -308,7 +320,7 @@ const getOrders = catchAsync(async (req, res) => {
   if (req.query.status)     filter.status                    = req.query.status;
   if (req.query.phone)      filter.customerPhone             = normalizePhone(req.query.phone);
   if (req.query.riskLevel) filter['fraudAnalysis.riskLevel'] = req.query.riskLevel;
-  if (req.query.payment)   filter.paymentMethod             = req.query.payment;
+  if (req.query.payment)   filter.paymentMethod              = req.query.payment;
 
   const [orders, total] = await Promise.all([
     Order.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
@@ -319,7 +331,7 @@ const getOrders = catchAsync(async (req, res) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GET /api/v1/orders/:id
+// GET /api/v1/orders/:id (Protected - for Merchant)
 // ─────────────────────────────────────────────────────────────────────────────
 const getOrder = catchAsync(async (req, res, next) => {
   const order = await Order.findOne({ _id: req.params.id, merchantId: req.merchant._id });
@@ -339,7 +351,7 @@ const getOrderPublic = catchAsync(async (req, res, next) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PATCH /api/v1/orders/:id/status
+// PATCH /api/v1/orders/:id/status (Protected - for Merchant)
 // ─────────────────────────────────────────────────────────────────────────────
 const updateOrderStatus = catchAsync(async (req, res, next) => {
   const { status, notes } = req.body;
@@ -412,7 +424,7 @@ async function _triggerShipping(order) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GET /api/v1/orders/customer/:phone
+// GET /api/v1/orders/customer/:phone (Protected - for Merchant)
 // ─────────────────────────────────────────────────────────────────────────────
 const getCustomerProfile = catchAsync(async (req, res, next) => {
   const normalizedPhone = normalizePhone(req.params.phone);
@@ -431,7 +443,7 @@ const getCustomerProfile = catchAsync(async (req, res, next) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GET /api/v1/orders/stats/summary
+// GET /api/v1/orders/stats/summary (Protected - for Merchant)
 // ─────────────────────────────────────────────────────────────────────────────
 const getOrderStats = catchAsync(async (req, res) => {
   const merchantId = req.merchant._id;
