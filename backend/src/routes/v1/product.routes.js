@@ -16,14 +16,22 @@ const {
   adjustStockValidation,
 } = require('../../validations/product.validation');
 
-// All product routes are protected
+// ─────────────────────────────────────────────────────────────────
+// 🌐 1. مسارات عامة (Public Routes) - الزبائن يقدروا يشوفوا المنتجات
+// ─────────────────────────────────────────────────────────────────
+router.get('/', getProducts);
+router.get('/:id', getProduct);
+
+// ─────────────────────────────────────────────────────────────────
+// 🔒 2. ميدل وير الحماية - أي مسار بعد السطر ده هيحتاج تسجيل دخول (للتاجر فقط)
+// ─────────────────────────────────────────────────────────────────
 router.use(protect);
 
-router.route('/').get(getProducts).post(createProductValidation, createProduct);
+// 🛠️ 3. مسارات خاصة بالتاجر (إضافة، تعديل، حذف)
+router.post('/', createProductValidation, createProduct);
 
 router
   .route('/:id')
-  .get(getProduct)
   .patch(updateProductValidation, updateProduct)
   .delete(deleteProduct);
 
