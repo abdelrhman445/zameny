@@ -1,6 +1,7 @@
 'use strict';
 
 const Product = require('../models/Product');
+const Merchant = require('../models/Merchant'); // ✅ استدعاء التاجر ضروري للبحث باسم المتجر
 const AppError = require('../utils/appError');
 const { catchAsync, paginate } = require('../utils/helpers');
 
@@ -28,16 +29,37 @@ const createProduct = catchAsync(async (req, res, next) => {
 
 /**
  * GET /api/v1/products
- * Get all products for the authenticated merchant with pagination.
+ * Get products (Public for customers using ?storeName=XYZ OR Private for authenticated merchants)
  */
 const getProducts = catchAsync(async (req, res, next) => {
   const page = Math.max(1, parseInt(req.query.page) || 1);
   const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 20));
   const skip = (page - 1) * limit;
 
-  const filter = { merchantId: req.merchant._id };
+  const filter = {};
+
+  // ✅ 1. لو الطلب جاي من زبون (Public) بيبحث باسم المتجر
+  if (req.query.storeName) {
+    const merchant = await Merchant.findOne({ storeName: req.query.storeName });
+    if (!merchant) {
+      return next(new AppError('المتجر غير موجود', 404));
+    }
+    filter.merchantId = merchant._id;
+    filter.isActive = true; // الزبون يشوف المنتجات النشطة بس
+  } 
+  // ✅ 2. لو الطلب جاي من التاجر نفسه (Protected) من داخل لوحة التحكم
+  else if (req.merchant && req.merchant._id) {
+    filter.merchantId = req.merchant._id;
+    // التاجر يقدر يفلتر النشط وغير النشط
+    if (req.query.isActive !== undefined) filter.isActive = req.query.isActive === 'true';
+  } 
+  // ✅ 3. لو مفيش اسم متجر ومفيش توكن تاجر، نرفض الطلب
+  else {
+    return next(new AppError('يجب تحديد اسم المتجر (storeName)', 400));
+  }
+
+  // فلترة إضافية للمخزون
   if (req.query.inStock === 'true') filter.stockCount = { $gt: 0 };
-  if (req.query.isActive !== undefined) filter.isActive = req.query.isActive === 'true';
 
   const [products, total] = await Promise.all([
     Product.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
@@ -52,13 +74,20 @@ const getProducts = catchAsync(async (req, res, next) => {
 
 /**
  * GET /api/v1/products/:id
- * Get a single product by ID (must belong to authenticated merchant).
+ * Get a single product by ID (Public for customers OR Private for merchants).
  */
 const getProduct = catchAsync(async (req, res, next) => {
-  const product = await Product.findOne({
-    _id: req.params.id,
-    merchantId: req.merchant._id,
-  });
+  const filter = { _id: req.params.id };
+
+  // ✅ نتاكد لو الطلب محمي بـ توكن، نقصر البحث على منتجات التاجر ده بس
+  if (req.merchant && req.merchant._id) {
+    filter.merchantId = req.merchant._id;
+  } else {
+    // لو زبون، نتأكد إنه يشوف المنتجات النشطة بس
+    filter.isActive = true;
+  }
+
+  const product = await Product.findOne(filter);
 
   if (!product) {
     return next(new AppError('Product not found.', 404));
