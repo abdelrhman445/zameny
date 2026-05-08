@@ -19,28 +19,40 @@ const {
   updateStatusValidation,
 } = require('../../validations/order.validation');
 
-// ✅ FIX: مسار عام للعميل لمتابعة طلبه بدون auth — لازم يكون قبل router.use(protect)
+// ─────────────────────────────────────────────────────────────────
+// 🌐 1. مسارات عامة (Public Routes) - الزبون يقدر يتعامل معاها بدون Token
+// ─────────────────────────────────────────────────────────────────
+
+// إنشاء أوردر جديد (الزبون مش محتاج يسجل دخول)
+router.post('/', createOrderValidation, fraudAnalyzer, createOrder);
+
+// مسار عام للعميل لمتابعة طلبه
 router.get('/:id/public', getOrderPublic);
 
-// All order routes below are protected (require merchant JWT)
-router.use(protect);
-
-// Stats & analytics
-router.get('/stats/summary', getOrderStats);
-
-// Customer profile
-router.get('/customer/:phone', getCustomerProfile);
-
-// Core CRUD
-router.route('/')
-  .get(getOrders)
-  .post(createOrderValidation, fraudAnalyzer, createOrder);
-
-router.get('/:id', getOrder);
-router.patch('/:id/status', updateStatusValidation, updateOrderStatus);
-
-// OTP endpoints (COD payment verification)
+// تأكيد الـ OTP وإعادة الإرسال (العميل بيستخدمهم لتأكيد الدفع عند الاستلام)
 router.post('/:id/verify-otp', verifyCodOtp);
 router.post('/:id/resend-otp', resendOtp);
+
+// ─────────────────────────────────────────────────────────────────
+// 🔒 2. ميدل وير الحماية - أي مسار بعد السطر ده للتاجر فقط (لازم توكن)
+// ─────────────────────────────────────────────────────────────────
+router.use(protect);
+
+// 🛠️ 3. مسارات خاصة بالتاجر (لوحة التحكم)
+
+// عرض كل الطلبات للتاجر
+router.get('/', getOrders);
+
+// عرض تفاصيل طلب معين للتاجر
+router.get('/:id', getOrder);
+
+// تحديث حالة الطلب
+router.patch('/:id/status', updateStatusValidation, updateOrderStatus);
+
+// إحصائيات الطلبات (Stats & analytics)
+router.get('/stats/summary', getOrderStats);
+
+// بروفايل العميل (Customer profile)
+router.get('/customer/:phone', getCustomerProfile);
 
 module.exports = router;
