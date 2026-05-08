@@ -138,7 +138,9 @@ export default function CheckoutPage({ params }: PageProps) {
         toast.success('وصلك رمز OTP الآن');
         setStep('otp');
       } else {
-        const payload: CreateOrderPayload = {
+        // ✅ إضافة storeName للـ Payload في حالة الدفع الأونلاين
+        const payload: CreateOrderPayload & { storeName: string } = {
+          storeName: storeSlug,
           customerName: form.customerName.trim(),
           customerPhone: form.customerPhone.trim(),
           customerAddress: form.customerAddress.trim(),
@@ -177,7 +179,9 @@ export default function CheckoutPage({ params }: PageProps) {
       const result = await confirmationResult.confirm(otp);
       const idToken = await result.user.getIdToken();
 
+      // ✅ إضافة storeName للـ Payload في حالة الـ COD
       const payload = {
+        storeName: storeSlug,
         customerName: form.customerName.trim(),
         customerPhone: form.customerPhone.trim(),
         customerAddress: form.customerAddress.trim(),
