@@ -40,7 +40,11 @@ const getProducts = catchAsync(async (req, res, next) => {
 
   // ✅ 1. لو الطلب جاي من زبون (Public) بيبحث باسم المتجر
   if (req.query.storeName) {
-    const merchant = await Merchant.findOne({ storeName: req.query.storeName });
+    // 🚀 التعديل هنا: استخدام Regex للبحث بتجاهل حالة الأحرف (Case-Insensitive)
+    const merchant = await Merchant.findOne({ 
+      storeName: { $regex: new RegExp(`^${req.query.storeName}$`, 'i') } 
+    });
+    
     if (!merchant) {
       return next(new AppError('المتجر غير موجود', 404));
     }
