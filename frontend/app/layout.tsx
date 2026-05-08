@@ -3,7 +3,7 @@ import { Cairo } from 'next/font/google';
 import { Toaster } from 'sonner';
 import './globals.css';
 
-// تحميل الخط باحترافية لتسريع الموقع ومنع الـ Layout Shift
+// تحميل خط Cairo لدعم العربية والإنجليزية بتميز
 const cairo = Cairo({ 
   subsets: ['arabic', 'latin'],
   weight: ['300', '400', '500', '600', '700', '800'],
@@ -12,29 +12,31 @@ const cairo = Cairo({
 
 export const metadata: Metadata = {
   title: {
-    default: 'A.E.E — Advanced E-commerce Engine',
-    template: '%s | A.E.E',
+    default: 'Zameny Store | منصة التجارة الذكية',
+    template: '%s | A.E.E', // ربط الصفحة بمحركك المتطور Advanced E-commerce Engine
   },
-  description: 'منصة التجارة الإلكترونية الأكثر ذكاءً في مصر — مدعومة بمحرك كشف الاحتيال',
-  keywords: ['ecommerce', 'egypt', 'fraud detection', 'saas', 'online store'],
-};
-
+  description: 'Zameny Store — الحل الأمثل للتجارة الإلكترونية في مصر، مدعوم بأنظمة كشف الاحتيال الذكية والربط مع تيليجرام.',
+  keywords: ['Zameny', 'Zameny Store', 'A.E.E', 'E-commerce Egypt', 'Fraud Detection', 'Cybersecurity'],
+  icons: {
+    icon: [
+      { url: '/favicon.ico' }, 
+      { url: '/icon.svg', type: 'image/svg+xml' }, 
+    ],
+    apple: '/apple-touch-icon.png',
+  },
+}
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    // ربط الخط بـ html بالكامل
     <html lang="ar" dir="rtl" className={cairo.className}>
-      <head>
-        {/* تم حذف الـ link القديم لأن Next.js سيتولى أمر الخطوط الآن */}
-      </head>
       <body className="min-h-screen bg-[#030712] text-slate-50 antialiased selection:bg-rose-500/30">
         
         {children}
         
-        {/* تخصيص شكل الإشعارات لتبدو فخمة وزجاجية */}
+        {/* تخصيص الـ Toaster ليتماشى مع تصميمك الفخم */}
         <Toaster
           position="top-center"
           richColors
@@ -42,8 +44,8 @@ export default function RootLayout({
           toastOptions={{
             style: { 
               fontFamily: 'inherit',
-              background: 'rgba(15, 23, 42, 0.8)', // خلفية زجاجية غامقة
-              backdropFilter: 'blur(12px)',        // تأثير الزجاج
+              background: 'rgba(15, 23, 42, 0.8)',
+              backdropFilter: 'blur(12px)',
               border: '1px solid rgba(30, 41, 59, 0.8)',
               color: '#f8fafc'
             },

@@ -33,4 +33,28 @@ const loginValidation = [
   handleValidationErrors,
 ];
 
-module.exports = { registerValidation, loginValidation, handleValidationErrors };
+// ✅ الفاليشن الخاص بطلب كود استعادة كلمة المرور
+const forgotPasswordValidation = [
+  body('email').isEmail().withMessage('Valid email is required.').normalizeEmail(),
+  handleValidationErrors,
+];
+
+// ✅ الفاليشن الخاص بتعيين كلمة المرور الجديدة
+const resetPasswordValidation = [
+  body('email').isEmail().withMessage('Valid email is required.').normalizeEmail(),
+  body('otp').trim().isLength({ min: 6, max: 6 }).withMessage('OTP must be exactly 6 digits.'),
+  body('newPassword')
+    .isLength({ min: 8 })
+    .withMessage('New password must be at least 8 characters.')
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
+    .withMessage('New password must contain uppercase, lowercase, and a number.'),
+  handleValidationErrors,
+];
+
+module.exports = { 
+  registerValidation, 
+  loginValidation, 
+  forgotPasswordValidation,
+  resetPasswordValidation,
+  handleValidationErrors 
+};

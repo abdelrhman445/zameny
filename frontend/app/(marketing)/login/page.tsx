@@ -50,25 +50,19 @@ export default function LoginPage() {
 
         <div className="relative z-10">
           <Link href="/" className="inline-flex items-center gap-3 mb-16 hover:opacity-80 transition-opacity">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-rose-500 to-rose-700 flex items-center justify-center shadow-lg shadow-rose-500/20">
-              <Zap className="w-6 h-6 text-white" />
-            </div>
             <div>
-              <p className="text-white font-black text-xl tracking-tight">Zameny</p>
-              <p className="text-slate-400 text-xs font-medium uppercase tracking-wider">Advanced E-commerce Engine</p>
+              <p className="text-white font-black text-xl tracking-tight">Zameny Store</p>
             </div>
           </Link>
 
-          
-
           <h1 className="text-5xl font-black text-white leading-[1.2] mb-6 tracking-tight">
-            لوحة تحكم<br />
+            تسجيل الدخول لمتجرك<br />
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-rose-400 to-purple-500">
-              التجارة الذكية.
+             قول وداعاً للإرجاع الوهمي
             </span>
           </h1>
           <p className="text-slate-400 text-lg leading-relaxed max-w-md font-medium">
-            تابع مبيعاتك لحظة بلحظة، احمِ متجرك من الإرجاع الوهمي، وأدر مخزونك بذكاء من مكان واحد.
+           وتابع أداء متجرك مع حماية ذكية ضد الاحتيال في الوقت الحقيقي. انضم إلى زامني اليوم وابدأ في تعزيز أرباحك بثقة!
           </p>
         </div>
 
@@ -76,14 +70,18 @@ export default function LoginPage() {
         <div className="relative z-10 grid grid-cols-3 gap-5">
           {[
             { value: '99.9%', label: 'دقة الحماية' },
-            { value: '< 1s', label: 'سرعة التحليل' },
-            { value: '24/7', label: 'مراقبة آلية' },
+            { value: '200', label: 'سرعة التحليل' },
+            { value: '24/7', label: 'حماية مستمرة' },
           ].map((stat) => (
             <div key={stat.value} className="bg-white/[0.02] backdrop-blur-xl border border-white/[0.05] rounded-2xl p-5 text-center hover:-translate-y-1 transition-transform duration-300 shadow-2xl">
               <p className="text-3xl font-black bg-clip-text text-transparent bg-gradient-to-b from-white to-slate-400 mb-1">{stat.value}</p>
               <p className="text-xs font-medium text-slate-400">{stat.label}</p>
             </div>
           ))}
+        </div>
+        <div className="relative z-10 flex items-center gap-6 border-t border-slate-800/50 pt-8 mt-12">
+          
+          <p className="text-sm text-slate-500">All Rights Reserved to Zameny Store © 2026 | <Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link> | <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link></p>
         </div>
       </div>
 
@@ -93,10 +91,8 @@ export default function LoginPage() {
           
           {/* Mobile logo */}
           <div className="flex items-center gap-3 lg:hidden mb-10">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-500 to-rose-700 flex items-center justify-center shadow-lg shadow-rose-500/20">
-              <Zap className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-white font-black text-2xl tracking-tight">Zameny</span>
+           
+            <span className="text-white font-black text-2xl tracking-tight">Zameny Store</span>
           </div>
 
           <div>
@@ -111,15 +107,16 @@ export default function LoginPage() {
               <Label htmlFor="email" className="text-sm font-semibold text-slate-300">البريد الإلكتروني</Label>
               <div className="relative group" dir="ltr">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Mail className="w-5 h-5 text-slate-500 group-focus-within:text-rose-500 transition-colors" />
+                  <Mail className="w-5 h-5 text-slate-400 group-focus-within:text-rose-500 transition-colors" />
                 </div>
+                {/* ✅ التعديل هنا: خلفية بيضاء وكتابة بالأسود */}
                 <Input
                   id="email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="admin@mystore.com"
-                  className="h-14 pl-11 pr-4 bg-[#0a0f1c] border-slate-800 text-white placeholder:text-slate-600 focus-visible:ring-1 focus-visible:ring-rose-500 focus-visible:border-rose-500 rounded-xl text-base transition-all"
+                  className="h-14 pl-11 pr-4 bg-white border-slate-200 text-slate-900 font-bold placeholder:text-slate-400 placeholder:font-medium focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:border-rose-500 rounded-xl text-base transition-all shadow-sm"
                   autoComplete="email"
                 />
               </div>
@@ -129,27 +126,28 @@ export default function LoginPage() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password" className="text-sm font-semibold text-slate-300">كلمة المرور</Label>
-                <Link href="#" className="text-xs font-medium text-rose-500 hover:text-rose-400 transition-colors">
+                <Link href="/forgot-password" className="text-xs font-medium text-rose-500 hover:text-rose-400 transition-colors">
                   نسيت كلمة المرور؟
                 </Link>
               </div>
               <div className="relative group" dir="ltr">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Lock className="w-5 h-5 text-slate-500 group-focus-within:text-rose-500 transition-colors" />
+                  <Lock className="w-5 h-5 text-slate-400 group-focus-within:text-rose-500 transition-colors" />
                 </div>
+                {/* ✅ التعديل هنا: خلفية بيضاء وكتابة بالأسود */}
                 <Input
                   id="password"
                   type={showPw ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="h-14 pl-11 pr-12 bg-[#0a0f1c] border-slate-800 text-white placeholder:text-slate-600 focus-visible:ring-1 focus-visible:ring-rose-500 focus-visible:border-rose-500 rounded-xl text-base transition-all tracking-widest"
+                  className="h-14 pl-11 pr-12 bg-white border-slate-200 text-slate-900 font-bold placeholder:text-slate-400 placeholder:font-medium focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:border-rose-500 rounded-xl text-base transition-all tracking-widest shadow-sm"
                   autoComplete="current-password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPw(!showPw)}
-                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-500 hover:text-slate-300 transition-colors"
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-rose-500 transition-colors"
                 >
                   {showPw ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
@@ -165,7 +163,7 @@ export default function LoginPage() {
               {loading ? (
                 <>
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  <span>جاري الدخول...</span>
+                  <span>جاري الدخول ...</span>
                 </>
               ) : (
                 <>

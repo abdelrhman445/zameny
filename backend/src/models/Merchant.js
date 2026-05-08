@@ -42,6 +42,12 @@ const merchantSchema = new mongoose.Schema(
       minlength: [8, 'Password must be at least 8 characters.'],
       select:    false,
     },
+    passwordResetOtp: {
+    type: String,
+  },
+  passwordResetExpires: {
+    type: Date,
+  },
     storeName: {
       type:      String,
       required:  [true, 'Store name is required.'],
