@@ -30,13 +30,14 @@ export default function Sidebar() {
 
   // اكتشاف حجم الشاشة عشان نتعامل مع الموبايل بشكل مختلف
   useEffect(() => {
+    // 1. إغلاق القائمة أوتوماتيك مرة واحدة فقط عند التحميل (لو الشاشة موبايل والقائمة مفتوحة)
+    if (window.innerWidth < 768 && !sidebarCollapsed) {
+      toggleSidebar(); 
+    }
+
+    // 2. مراقبة تغيير حجم الشاشة لتحديث حالة الـ isMobile فقط (بدون التداخل مع فتح/قفل القائمة)
     const handleResize = () => {
-      const mobile = window.innerWidth < 768;
-      setIsMobile(mobile);
-      // إغلاق القائمة أوتوماتيك أول ما نفتح من الموبايل
-      if (mobile && !sidebarCollapsed) {
-        toggleSidebar(); 
-      }
+      setIsMobile(window.innerWidth < 768);
     };
     
     handleResize(); // الفحص عند التحميل
@@ -99,7 +100,6 @@ export default function Sidebar() {
             {(!sidebarCollapsed || isMobile) && (
               <div className="min-w-0 flex flex-col animate-fade-in">
                 <p className="text-xl font-black text-white leading-none tracking-tight">Zameny</p>
-                
               </div>
             )}
           </div>
