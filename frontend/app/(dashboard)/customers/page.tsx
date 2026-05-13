@@ -325,7 +325,7 @@ export default function CustomersPage() {
                           <td className="px-5 sm:px-6 py-1.5 sm:py-4">
                             <span className={cn('text-[10px] sm:text-xs px-2 sm:px-2.5 py-1 rounded-md font-bold border inline-flex items-center gap-1.5', STATUS_COLORS[order.status] || 'bg-slate-50 text-slate-600 border-slate-200')}>
                                <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-current opacity-70" />
-                              {STATUS_LABELS[order.status] || order.status}
+                              {(order.status && STATUS_LABELS[order.status as keyof typeof STATUS_LABELS]) || order.status}
                             </span>
                           </td>
                           
