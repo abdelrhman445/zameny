@@ -2,7 +2,10 @@
 
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Bell, Search, Store, ExternalLink, Settings, LogOut, Blocks, UserCircle } from 'lucide-react';
+import { 
+  Bell, Search, Store, ExternalLink, Settings, 
+  LogOut, Blocks, UserCircle, CheckCheck 
+} from 'lucide-react';
 import Sidebar from '@/components/dashboard/Sidebar';
 import { useMerchantStore } from '@/store/useMerchantStore';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -10,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
-  DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
+  DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import api from '@/lib/api';
 import Link from 'next/link';
@@ -33,7 +36,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     fetchMe();
   }, [setMerchant]);
 
-  const storeUrl = merchant?.storeSlug
+  // ✅ نستخدم slug الجديد أولاً (مولَّد أوتوماتيك من storeName في الباك)
+  const storeUrl = merchant?.slug
+    ? `/${merchant.slug}`
+    : merchant?.storeSlug
     ? `/${merchant.storeSlug}`
     : merchant?.storeName
     ? `/${merchant.storeName.toLowerCase().replace(/\s+/g, '-')}`
@@ -44,16 +50,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <Sidebar />
 
       {/* Main content */}
-      {/* ✅ التركاية السحرية هنا: استخدام md: عشان الموبايل ياخد الشاشة كاملة */}
       <div className={cn('transition-all duration-300', sidebarCollapsed ? 'md:mr-16' : 'md:mr-64')}>
         
         {/* ── Top Header (Glassmorphism & Premium UI) ── */}
         <header className="sticky top-0 z-30 bg-white/70 backdrop-blur-xl border-b border-slate-200/80 px-4 lg:px-8 py-3.5 shadow-[0_4px_20px_-15px_rgba(0,0,0,0.05)] transition-all">
           <div className="flex items-center justify-between gap-4">
             
-            {/* Right Side: Quick Search (الزرار القديم اتشال من هنا) */}
+            {/* Right Side: Quick Search */}
             <div className="flex items-center gap-4 flex-1">
-              
               {/* Mac-style Quick Search (SaaS Premium touch) */}
               <div className="hidden md:flex items-center gap-2 px-3 py-2 bg-slate-100/80 border border-slate-200/60 rounded-xl text-slate-400 w-full max-w-xs hover:bg-slate-100 hover:border-slate-300 transition-colors cursor-text group">
                 <Search className="w-4 h-4 text-slate-400 group-hover:text-slate-500 transition-colors" />
@@ -77,47 +81,70 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 >
                   <Link href={storeUrl} target="_blank">
                     <Store className="w-4 h-4" />
-                    <span className="font-semibold text-xs mt-0.5">زيارة المتجر</span>
+                    <span className="font-bold text-xs mt-0.5">زيارة المتجر</span>
                     <ExternalLink className="w-3 h-3 opacity-50" />
                   </Link>
                 </Button>
               )}
 
-              {/* Notifications */}
+              {/* ── Notifications Dropdown ── */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="relative rounded-xl hover:bg-slate-100 text-slate-600 h-9 w-9" onClick={markAllRead}>
+                  {/* شلنا الـ onClick=markAllRead من هنا عشان الإشعارات متتمسحش أول ما تفتح القائمة */}
+                  <Button variant="ghost" size="icon" className="relative rounded-xl hover:bg-slate-100 text-slate-600 h-9 w-9 focus:ring-0 focus-visible:ring-0">
                     <Bell className="w-5 h-5" />
                     {unreadCount() > 0 && (
                       <>
-                        <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full z-10" />
-                        <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full animate-ping opacity-75" />
+                        <span className="absolute top-2 right-2.5 w-2 h-2 bg-rose-500 rounded-full z-10 border border-white" />
+                        <span className="absolute top-2 right-2.5 w-2 h-2 bg-rose-500 rounded-full animate-ping opacity-75" />
                       </>
                     )}
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-80 rounded-2xl p-2 shadow-xl border-slate-100">
-                  <DropdownMenuLabel className="font-bold text-base px-3 py-2 flex items-center justify-between">
-                    الإشعارات
-                    <span className="bg-slate-100 text-slate-500 text-xs px-2 py-0.5 rounded-full font-medium">{unreadCount()}</span>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator className="bg-slate-100" />
-                  <div className="py-8 text-center flex flex-col items-center justify-center gap-2">
-                    <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mb-1">
-                      <Bell className="w-5 h-5 text-slate-300" />
+                
+                {/* تعديل العرض ليكون متجاوب مع الموبايل w-[calc(100vw-2rem)] */}
+                <DropdownMenuContent align="end" className="w-[calc(100vw-2rem)] sm:w-80 md:w-96 rounded-3xl p-0 shadow-2xl border-slate-200/60 mt-2 overflow-hidden z-50">
+                  
+                  {/* Notifications Header */}
+                  <div className="flex items-center justify-between px-5 py-4 bg-slate-50/80 border-b border-slate-100">
+                    <div className="flex items-center gap-2.5">
+                      <span className="font-black text-slate-900 text-base">الإشعارات</span>
+                      {unreadCount() > 0 && (
+                        <span className="bg-rose-100 text-rose-700 text-[10px] px-2 py-0.5 rounded-full font-black">
+                          {unreadCount()} جديد
+                        </span>
+                      )}
                     </div>
-                    <p className="text-sm font-medium text-slate-600">لا توجد إشعارات جديدة</p>
-                    <p className="text-xs text-slate-400">أنت على اطلاع دائم بكل شيء!</p>
+                    {unreadCount() > 0 && (
+                      <button 
+                        onClick={markAllRead} 
+                        className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 transition-colors flex items-center gap-1 bg-indigo-50 px-2 py-1 rounded-md"
+                      >
+                        <CheckCheck className="w-3.5 h-3.5" /> مقروء
+                      </button>
+                    )}
                   </div>
+
+                  {/* Notifications Body (Empty State) */}
+                  <div className="py-10 px-6 text-center flex flex-col items-center justify-center bg-white">
+                    <div className="w-16 h-16 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-center mb-4 shadow-[0_2px_10px_rgb(0,0,0,0.02)]">
+                      <Bell className="w-7 h-7 text-slate-300" />
+                    </div>
+                    <p className="text-sm font-black text-slate-800 mb-1.5">لا توجد إشعارات جديدة</p>
+                    <p className="text-xs font-medium text-slate-500 leading-relaxed max-w-[220px]">
+                      سنقوم بإبلاغك فور وصول أي طلبات أو تحديثات جديدة لمتجرك.
+                    </p>
+                  </div>
+                  
                 </DropdownMenuContent>
               </DropdownMenu>
 
               <div className="w-px h-6 bg-slate-200 hidden sm:block mx-1"></div>
 
-              {/* User Avatar & Dropdown */}
+              {/* ── User Avatar & Dropdown ── */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-2.5 rounded-xl px-2 py-1.5 hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500/20">
+                  <button className="flex items-center gap-2.5 rounded-xl px-2 py-1.5 hover:bg-slate-100 transition-colors focus:outline-none focus:ring-0">
                     <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-600 to-indigo-900 flex items-center justify-center text-white text-sm font-bold flex-shrink-0 shadow-md">
                       {merchant?.name?.[0]?.toUpperCase() || 'Z'}
                     </div>
@@ -127,39 +154,39 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </div>
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 rounded-2xl p-2 shadow-xl border-slate-100">
-                  <div className="px-2 py-3 mb-1">
-                    <p className="text-sm font-bold text-slate-800">{merchant?.name}</p>
-                    <p className="text-xs text-slate-500 mt-0.5 truncate" dir="ltr">{merchant?.email}</p>
+                <DropdownMenuContent align="end" className="w-56 rounded-2xl p-2 shadow-xl border-slate-100 mt-2 z-50">
+                  <div className="px-3 py-3 mb-1 bg-slate-50/50 rounded-xl border border-slate-100">
+                    <p className="text-sm font-black text-slate-800 truncate">{merchant?.name}</p>
+                    <p className="text-xs font-medium text-slate-500 mt-0.5 truncate" dir="ltr">{merchant?.email}</p>
                   </div>
-                  <DropdownMenuSeparator className="bg-slate-100" />
+                  <DropdownMenuSeparator className="bg-slate-100 my-1" />
                   
-                  <div className="p-1 space-y-1">
+                  <div className="p-1 space-y-0.5">
                     <DropdownMenuItem asChild className="rounded-lg cursor-pointer hover:bg-slate-50 focus:bg-slate-50 py-2.5">
                       <Link href="/settings/profile" className="flex items-center gap-2.5">
                         <UserCircle className="w-4 h-4 text-slate-400" />
-                        <span className="font-medium text-sm">الملف الشخصي</span>
+                        <span className="font-bold text-sm text-slate-700">الملف الشخصي</span>
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild className="rounded-lg cursor-pointer hover:bg-slate-50 focus:bg-slate-50 py-2.5">
                       <Link href="/settings/integrations" className="flex items-center gap-2.5">
                         <Blocks className="w-4 h-4 text-slate-400" />
-                        <span className="font-medium text-sm">الربط والتكامل</span>
+                        <span className="font-bold text-sm text-slate-700">الربط والتكامل</span>
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild className="rounded-lg cursor-pointer hover:bg-slate-50 focus:bg-slate-50 py-2.5">
                       <Link href="/settings" className="flex items-center gap-2.5">
                         <Settings className="w-4 h-4 text-slate-400" />
-                        <span className="font-medium text-sm">إعدادات المتجر</span>
+                        <span className="font-bold text-sm text-slate-700">إعدادات المتجر</span>
                       </Link>
                     </DropdownMenuItem>
                   </div>
 
-                  <DropdownMenuSeparator className="bg-slate-100" />
+                  <DropdownMenuSeparator className="bg-slate-100 my-1" />
                   
                   <div className="p-1">
                     <DropdownMenuItem
-                      className="rounded-lg cursor-pointer text-rose-600 focus:text-rose-700 focus:bg-rose-50 hover:bg-rose-50 py-2.5 flex items-center gap-2.5 font-bold transition-colors"
+                      className="rounded-lg cursor-pointer text-rose-600 focus:text-rose-700 focus:bg-rose-50 hover:bg-rose-50 py-2.5 flex items-center gap-2.5 font-black transition-colors"
                       onClick={() => { logout(); router.push('/login'); }}
                     >
                       <LogOut className="w-4 h-4" />
@@ -168,6 +195,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   </div>
                 </DropdownMenuContent>
               </DropdownMenu>
+
             </div>
           </div>
         </header>

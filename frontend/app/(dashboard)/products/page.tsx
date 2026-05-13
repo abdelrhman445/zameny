@@ -21,9 +21,10 @@ interface ProductForm {
   stockCount: string;
   description: string;
   sku: string;
+  imageUrl: string; // ✅ FIX: أضفنا imageUrl
 }
 
-const emptyForm: ProductForm = { name: '', price: '', stockCount: '', description: '', sku: '' };
+const emptyForm: ProductForm = { name: '', price: '', stockCount: '', description: '', sku: '', imageUrl: '' };
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -71,6 +72,7 @@ export default function ProductsPage() {
       stockCount: product.stockCount.toString(),
       description: product.description || '',
       sku: product.sku || '',
+      imageUrl: product.imageUrl || '', // ✅ FIX
     });
     setDialogOpen(true);
   };
@@ -88,6 +90,7 @@ export default function ProductsPage() {
         stockCount: parseInt(form.stockCount),
         description: form.description || undefined,
         sku: form.sku || undefined,
+        imageUrl: form.imageUrl || undefined, // ✅ FIX
       };
 
       if (editingProduct) {
@@ -211,32 +214,51 @@ export default function ProductsPage() {
                   </div>
                 )}
 
-                <div>
-                  <div className="flex items-start justify-between gap-3 mb-4">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-slate-900 text-base truncate" title={product.name}>{product.name}</h3>
-                      {product.sku ? (
-                        <p className="text-[11px] font-mono font-medium text-slate-400 mt-1 bg-slate-50 border border-slate-100 inline-block px-1.5 py-0.5 rounded-md" dir="ltr">{product.sku}</p>
-                      ) : (
-                        <p className="text-[11px] font-medium text-slate-400 mt-1">بدون SKU</p>
-                      )}
+                {/* ✅ تعديل الغلاف العلوي ليحتوي على الصورة والتفاصيل بمرونة */}
+                <div className="flex-1 flex flex-col">
+                  {/* عرض صورة المنتج في حال وجودها */}
+                  {product.imageUrl && (
+                    <div className="w-full h-40 mb-4 rounded-xl overflow-hidden border border-slate-100 bg-slate-50 shrink-0">
+                      <img
+                        src={product.imageUrl}
+                        alt={product.name}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        onError={(e) => {
+                          // إخفاء حاوية الصورة بالكامل في حال فشل تحميل الرابط
+                          (e.currentTarget.parentElement as HTMLDivElement).style.display = 'none';
+                        }}
+                      />
                     </div>
-                    <span className={cn(
-                      'text-[10px] px-2 py-1 rounded-md font-bold flex-shrink-0 border',
-                      !isOutOfStock ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-rose-50 text-rose-600 border-rose-100'
-                    )}>
-                      {!isOutOfStock ? 'متوفر' : 'نفد'}
-                    </span>
-                  </div>
-
-                  {product.description ? (
-                    <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed font-medium min-h-[36px]">{product.description}</p>
-                  ) : (
-                    <p className="text-xs text-slate-300 italic min-h-[36px]">لا يوجد وصف للمنتج</p>
                   )}
+
+                  <div>
+                    <div className="flex items-start justify-between gap-3 mb-4">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-slate-900 text-base truncate" title={product.name}>{product.name}</h3>
+                        {product.sku ? (
+                          <p className="text-[11px] font-mono font-medium text-slate-400 mt-1 bg-slate-50 border border-slate-100 inline-block px-1.5 py-0.5 rounded-md" dir="ltr">{product.sku}</p>
+                        ) : (
+                          <p className="text-[11px] font-medium text-slate-400 mt-1">بدون SKU</p>
+                        )}
+                      </div>
+                      <span className={cn(
+                        'text-[10px] px-2 py-1 rounded-md font-bold flex-shrink-0 border',
+                        !isOutOfStock ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-rose-50 text-rose-600 border-rose-100'
+                      )}>
+                        {!isOutOfStock ? 'متوفر' : 'نفد'}
+                      </span>
+                    </div>
+
+                    {product.description ? (
+                      <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed font-medium min-h-[36px]">{product.description}</p>
+                    ) : (
+                      <p className="text-xs text-slate-300 italic min-h-[36px]">لا يوجد وصف للمنتج</p>
+                    )}
+                  </div>
                 </div>
 
-                <div className="mt-5 space-y-4">
+                {/* القسم السفلي الخاص بالأسعار والأزرار */}
+                <div className="mt-5 space-y-4 shrink-0">
                   <div className="flex items-center justify-between bg-slate-50/80 border border-slate-100 rounded-xl p-2.5">
                     <span className="text-xl font-black text-slate-900">{formatCurrency(product.price)}</span>
                     
@@ -348,6 +370,23 @@ export default function ProductsPage() {
               />
             </div>
 
+            {/* ✅ حقل رابط صورة المنتج */}
+            <div className="space-y-2">
+              <Label htmlFor="imageUrl" className="text-sm font-bold text-slate-700">رابط صورة المنتج <span className="text-slate-400 font-normal text-xs">(اختياري)</span></Label>
+              <Input 
+                id="imageUrl" 
+                value={form.imageUrl} 
+                onChange={(e) => setForm({ ...form, imageUrl: e.target.value })} 
+                placeholder="https://..." 
+                dir="ltr" 
+                autoComplete="off"
+                className="h-12 rounded-xl bg-slate-50/50 border-slate-200 focus-visible:ring-indigo-500 text-sm text-slate-900" 
+              />
+              {form.imageUrl && (
+                <img src={form.imageUrl} alt="معاينة" className="h-20 w-20 object-cover rounded-xl border border-slate-200 mt-1" onError={(e) => (e.currentTarget.style.display = 'none')} />
+              )}
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="desc" className="text-sm font-bold text-slate-700">الوصف <span className="text-slate-400 font-normal text-xs">(اختياري)</span></Label>
               <Input 
@@ -361,7 +400,6 @@ export default function ProductsPage() {
             </div>
           </div>
 
-          {/* ✅ تم ضبط المسافات هنا لإصلاح مشكلة التداخل */}
           <DialogFooter className="flex flex-col-reverse sm:flex-row items-center justify-end gap-3 sm:space-x-0 mt-8 border-t border-slate-100 pt-5">
             <Button variant="outline" className="h-12 px-8 rounded-xl font-bold border-slate-200 text-slate-700 hover:bg-slate-50 w-full sm:w-auto" onClick={() => setDialogOpen(false)}>
               إلغاء
@@ -407,7 +445,6 @@ export default function ProductsPage() {
             </div>
           </div>
 
-          {/* ✅ تم ضبط المسافات هنا لإصلاح مشكلة التداخل */}
           <DialogFooter className="flex flex-col-reverse sm:flex-row items-center justify-end gap-3 sm:space-x-0 mt-6 border-t border-slate-100 pt-5">
             <Button variant="outline" className="h-12 px-6 rounded-xl font-bold border-slate-200 text-slate-700 hover:bg-slate-50 w-full sm:w-auto" onClick={() => setStockDialogOpen(false)}>
               إلغاء

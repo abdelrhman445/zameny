@@ -19,6 +19,7 @@ const {
   registerValidation, 
   loginValidation,
   forgotPasswordValidation,
+  verifyOtpValidation,   // ✅ FIX: استيراد الفاليشن الجديد المنفصل
   resetPasswordValidation   
 } = require('../../validations/auth.validation');
 
@@ -27,8 +28,8 @@ router.post('/register', registerValidation, register);
 router.post('/login', loginValidation, login);
 router.post('/forgot-password', forgotPasswordValidation, forgotPassword);
 
-// ✅ 2. تم نقل مسار التحقق هنا (يجب أن يكون قبل الـ protect)
-router.post('/verify-otp', forgotPasswordValidation, verifyOtp); 
+// ✅ FIX: استخدام verifyOtpValidation المنفصل بدل forgotPasswordValidation
+router.post('/verify-otp', verifyOtpValidation, verifyOtp); 
 router.post('/reset-password', resetPasswordValidation, resetPassword);
 
 // ── Protected Routes (مسارات محمية تحتاج توكن) ──

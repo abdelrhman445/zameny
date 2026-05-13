@@ -22,7 +22,7 @@ export const useCartStore = create<CartState>()(
 
       setStoreSlug: (slug: string) => {
         const current = get().storeSlug;
-        // Clear cart if switching stores
+        
         if (current && current !== slug) {
           set({ items: [], storeSlug: slug });
         } else {
@@ -33,6 +33,7 @@ export const useCartStore = create<CartState>()(
       addItem: (item: CartItem) => {
         set((state) => {
           const existing = state.items.find((i) => i.productId === item.productId);
+          
           if (existing) {
             const newQty = Math.min(existing.quantity + item.quantity, existing.stockCount);
             return {
@@ -41,6 +42,7 @@ export const useCartStore = create<CartState>()(
               ),
             };
           }
+          
           return { items: [...state.items, item] };
         });
       },
@@ -56,6 +58,7 @@ export const useCartStore = create<CartState>()(
           get().removeItem(productId);
           return;
         }
+        
         set((state) => ({
           items: state.items.map((i) =>
             i.productId === productId
@@ -76,7 +79,6 @@ export const useCartStore = create<CartState>()(
       },
     }),
     {
-      // ✅ التعديل هنا
       name: 'zameny-cart',
     }
   )

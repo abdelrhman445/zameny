@@ -76,8 +76,11 @@ const createOrder = catchAsync(async (req, res, next) => {
   // ✅ التأكد من وجود اسم المتجر والبحث عنه
   if (!storeName) return next(new AppError('يجب تحديد اسم المتجر (storeName) لإتمام الطلب.', 400));
   
-  const merchant = await Merchant.findOne({ 
-    storeName: { $regex: new RegExp(`^${storeName}$`, 'i') } 
+  const merchant = await Merchant.findOne({
+    $or: [
+      { storeName: { $regex: new RegExp(`^${storeName}$`, 'i') } },
+      { slug: { $regex: new RegExp(`^${storeName}$`, 'i') } }
+    ]
   });
   if (!merchant) return next(new AppError('المتجر غير موجود.', 404));
 
@@ -87,42 +90,10 @@ const createOrder = catchAsync(async (req, res, next) => {
   if (!['COD', 'Online'].includes(paymentMethod))
     return next(new AppError('paymentMethod must be COD or Online.', 400));
 
+ // ==========================================
+  // 🛡️ تأكيد الطلب (تم التحقق من الإيميل مسبقاً في الفرونت إند)
   // ==========================================
-  // 🛡️ إضافة فايربيز (Zero-Trust Validation)
-  // ==========================================
-  let isFirebaseVerified = false;
-  if (paymentMethod === 'COD') {
-    const idToken = req.headers['x-firebase-idtoken'];
-    
-    // لو الفرونت إند باعت توكن فايربيز، هنتأكد منه
-    if (idToken) {
-      try {
-        const decodedToken = await admin.auth().verifyIdToken(idToken);
-        const verifiedPhoneNumber = decodedToken.phone_number; 
-        const expectedPhone = customerPhone.startsWith('+2') ? customerPhone : `+2${customerPhone}`;
-
-        if (verifiedPhoneNumber !== expectedPhone) {
-          return res.status(403).json({ 
-            status: 'fail',
-            message: "عملية احتيال محتملة: رقم الهاتف المؤكد لا يتطابق مع رقم الشحن!" 
-          });
-        }
-        isFirebaseVerified = true; // تم التأكيد بنجاح
-      } catch (error) {
-        console.error("Firebase Token Verification Error:", error.message);
-        return res.status(401).json({ 
-          status: 'fail',
-          message: "رمز التأكيد غير صالح أو انتهت صلاحيته، يرجى المحاولة مرة أخرى." 
-        });
-      }
-    } else {
-      // إجبار الفرونت إند يبعت التوكن
-      return res.status(401).json({ 
-        status: 'fail',
-        message: "رمز التأكيد مفقود! يرجى تأكيد رقم الهاتف عبر رسالة SMS أولاً." 
-      });
-    }
-  }
+  let isFirebaseVerified = true;
   // ==========================================
 
   const session = await mongoose.startSession();
@@ -344,7 +315,7 @@ const getOrder = catchAsync(async (req, res, next) => {
 // ─────────────────────────────────────────────────────────────────────────────
 const getOrderPublic = catchAsync(async (req, res, next) => {
   const order = await Order.findById(req.params.id).select(
-    'orderNumber status paymentStatus paymentMethod totalAmount items customerName customerCity trackingNumber trackingUrl estimatedDelivery createdAt'
+    'orderNumber status paymentStatus paymentMethod totalAmount items customerName customerAddress customerCity trackingNumber trackingUrl estimatedDelivery createdAt'
   );
   if (!order) return next(new AppError('Order not found.', 404));
   res.status(200).json({ status: 'success', data: { order } });

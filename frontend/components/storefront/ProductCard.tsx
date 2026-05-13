@@ -42,7 +42,16 @@ export default function ProductCard({ product, storeSlug }: ProductCardProps) {
         
         {/* ── Product Image Area ── */}
         <div className="aspect-[4/3] sm:aspect-square bg-gradient-to-br from-slate-100/80 via-slate-50 to-slate-100/50 flex items-center justify-center relative overflow-hidden">
-          <Package className="w-14 h-14 text-slate-300 transition-transform duration-700 group-hover:scale-110" />
+          {/* ✅ FIX: عرض صورة المنتج لو موجودة، وإلا placeholder */}
+          {product.imageUrl ? (
+            <img
+              src={product.imageUrl}
+              alt={product.name}
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+            />
+          ) : (
+            <Package className="w-14 h-14 text-slate-300 transition-transform duration-700 group-hover:scale-110" />
+          )}
           
           {/* Out of Stock Overlay */}
           {!product.inStock && (

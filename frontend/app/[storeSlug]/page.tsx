@@ -1,14 +1,13 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Search, SlidersHorizontal, Package, XCircle } from 'lucide-react';
+import { Search, Package, X } from 'lucide-react';
 import { Product, ProductsResponse } from '@/types';
 import ProductCard from '@/components/storefront/ProductCard';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { PageLoading } from '@/components/shared/LoadingSpinner';
 import api from '@/lib/api';
-import { cn } from '@/lib/utils';
 
 interface PageProps {
   params: { storeSlug: string };
@@ -19,18 +18,16 @@ export default function StorefrontPage({ params }: PageProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [inStockOnly, setInStockOnly] = useState(false);
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         const res = await api.get<ProductsResponse>('/products', {
-          // ✅ التعديل هنا: إضافة storeName للسيرفر عشان يعرف الزبون بيبحث في أنهي متجر
           params: { limit: 100, isActive: true, storeName: storeSlug },
         });
         setProducts(res.data.data);
       } catch {
-        // Silently fail for storefront, show empty state
+        // لو حصل خطأ بنسيب المصفوفة فاضية
       } finally {
         setLoading(false);
       }
@@ -38,94 +35,73 @@ export default function StorefrontPage({ params }: PageProps) {
     fetchProducts();
   }, [storeSlug]);
 
+  // منطق البحث في اسم ووصف المنتج
   const filtered = products.filter((p) => {
-    const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase()) ||
-      (p.description || '').toLowerCase().includes(search.toLowerCase());
-    const matchesStock = inStockOnly ? p.inStock : true;
-    return matchesSearch && matchesStock;
+    const term = search.toLowerCase();
+    return p.name.toLowerCase().includes(term) || (p.description || '').toLowerCase().includes(term);
   });
 
-  if (loading) return <div className="py-20"><PageLoading label="جاري تجهيز المنتجات..." /></div>;
+  if (loading) return <div className="py-32 flex justify-center"><PageLoading label="جاري تحميل المنتجات..." /></div>;
 
   return (
-    <div className="space-y-8 animate-fade-in pb-16" dir="rtl">
+    <div className="space-y-10 pb-20" dir="rtl">
       
-      {/* ── Search & Filters Bar ── */}
-      <div className="bg-slate-50/80 border border-slate-200/60 p-3 sm:p-4 rounded-[2rem] shadow-[0_4px_20px_rgb(0,0,0,0.02)] flex flex-col md:flex-row gap-3 items-center justify-between transition-all">
-        
-        {/* Search Input */}
-        <div className="relative w-full group">
-          <div className="absolute inset-y-0 right-0 pr-5 flex items-center pointer-events-none">
-            <Search className="w-5 h-5 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
-          </div>
+      {/* ── Search Bar Section ── */}
+      <div className="max-w-2xl mx-auto w-full px-2">
+        <div className="relative group">
+          <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-slate-900 transition-colors" />
           <Input
-            placeholder="ابحث عن منتج، اسم، أو وصف..."
+            placeholder="ابحث عن منتج بالاسم أو الوصف..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            autoComplete="off"
-            className="pr-12 h-14 rounded-2xl bg-white border-slate-200/80 focus-visible:ring-indigo-500 shadow-sm text-slate-900 font-bold transition-all text-base"
+            className="w-full h-14 pr-12 pl-12 rounded-xl bg-white border-slate-200 shadow-sm focus-visible:ring-slate-900 focus-visible:border-slate-900 transition-all text-base font-medium"
           />
           {search && (
             <button 
               onClick={() => setSearch('')}
-              className="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400 hover:text-slate-600"
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-900 transition-colors"
             >
-              <XCircle className="w-5 h-5" />
+              <X className="w-5 h-5" />
             </button>
           )}
         </div>
-
-        {/* Filters */}
-        <div className="w-full md:w-auto shrink-0">
-          <Button
-            variant="outline"
-            onClick={() => setInStockOnly(!inStockOnly)}
-            className={cn(
-              "w-full md:w-auto h-14 px-6 rounded-2xl font-bold transition-all flex items-center justify-center gap-2.5 text-base border-0",
-              inStockOnly
-                ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/20"
-                : "bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 shadow-sm"
-            )}
-          >
-            <SlidersHorizontal className="w-5 h-5" />
-            <span>{inStockOnly ? 'المتوفر فقط' : 'إظهار الكل'}</span>
-          </Button>
-        </div>
       </div>
 
-      {/* ── Section Title & Count ── */}
-      <div className="flex items-center justify-between px-2">
-        <h2 className="text-2xl font-black text-slate-900">أحدث المنتجات</h2>
-        <div className="bg-white border border-slate-200 shadow-sm px-3 py-1.5 rounded-lg flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span className="text-sm font-bold text-slate-700">{filtered.length} منتج</span>
+      {/* ── Content Header ── */}
+      <div className="flex items-end justify-between border-b border-slate-100 pb-4 px-2">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-900">المنتجات</h2>
+          <p className="text-sm text-slate-500 mt-1">كل منتجاتنا الان بين يديك </p>
         </div>
+        <span className="text-xs font-bold text-slate-400 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
+          {filtered.length} منتج
+        </span>
       </div>
 
       {/* ── Products Grid ── */}
       {filtered.length === 0 ? (
-        <div className="py-20 flex flex-col items-center justify-center bg-white/50 border border-dashed border-slate-300 rounded-[2.5rem]">
-          <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-[0_8px_30px_rgb(0,0,0,0.04)] mb-5 border border-slate-100">
-            <Package className="w-10 h-10 text-slate-300" />
+        <div className="py-24 flex flex-col items-center justify-center text-center bg-slate-50/50 rounded-2xl border border-slate-100">
+          <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm mb-4">
+            <Package className="w-8 h-8 text-slate-200" />
           </div>
-          <h3 className="text-2xl font-black text-slate-800">لا توجد منتجات مطابقة</h3>
-          <p className="text-slate-500 text-sm mt-2 max-w-sm text-center font-medium leading-relaxed">
-            {search 
-              ? 'لم نعثر على أي منتجات تطابق بحثك الحالي. جرب استخدام كلمات مختلفة أو الغي الفلاتر.' 
-              : 'هذا المتجر لا يحتوي على منتجات متاحة للبيع في الوقت الحالي.'}
+          <h3 className="text-lg font-bold text-slate-900">
+            {search ? 'لم نجد نتائج لبحثك' : 'المتجر فارغ حالياً'}
+          </h3>
+          <p className="text-slate-500 text-sm mt-1 max-w-[250px]">
+            {search ? 'جرب البحث بكلمات أخرى أو امسح شريط البحث.' : 'لم يتم إضافة أي منتجات لهذا المتجر بعد.'}
           </p>
           {search && (
             <Button 
-              variant="outline" 
-              className="mt-6 h-12 px-8 rounded-xl font-bold border-slate-300 text-slate-700 hover:bg-slate-50 shadow-sm" 
-              onClick={() => { setSearch(''); setInStockOnly(false); }}
+              variant="link" 
+              className="mt-4 text-indigo-600 font-bold" 
+              onClick={() => setSearch('')}
             >
-              مسح البحث والفلاتر
+              عرض كل المنتجات
             </Button>
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
           {filtered.map((product) => (
             <ProductCard key={product._id} product={product} storeSlug={storeSlug} />
           ))}

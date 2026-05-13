@@ -10,7 +10,19 @@ const { catchAsync, paginate } = require('../utils/helpers');
  * Create a new product for the authenticated merchant.
  */
 const createProduct = catchAsync(async (req, res, next) => {
-  const { name, price, stockCount, description, sku } = req.body;
+  const { name, price, stockCount, description, sku, imageUrl } = req.body;
+
+  // ✅ FIX: فعّلنا فحص حدود الخطة — canAddProduct() موجودة في Merchant model
+  const currentCount = await Product.countDocuments({ merchantId: req.merchant._id, isActive: true });
+  if (!req.merchant.canAddProduct(currentCount)) {
+    return next(
+      new AppError(
+        `لقد وصلت للحد الأقصى لعدد المنتجات في خطة ${req.merchant.plan} (${req.merchant.productLimit} منتج). يرجى الترقية لإضافة المزيد.`,
+        403,
+        { code: 'PRODUCT_LIMIT_REACHED', currentPlan: req.merchant.plan, limit: req.merchant.productLimit }
+      )
+    );
+  }
 
   const product = await Product.create({
     merchantId: req.merchant._id,
@@ -19,6 +31,7 @@ const createProduct = catchAsync(async (req, res, next) => {
     stockCount: stockCount || 0,
     description,
     sku,
+    imageUrl: imageUrl || null, // ✅ FIX: دعم رابط الصورة
   });
 
   res.status(201).json({
@@ -41,9 +54,14 @@ const getProducts = catchAsync(async (req, res, next) => {
   // ✅ 1. لو الطلب جاي من زبون (Public) بيبحث باسم المتجر
   if (req.query.storeName) {
     // 🚀 التعديل هنا: استخدام Regex للبحث بتجاهل حالة الأحرف (Case-Insensitive)
-    const merchant = await Merchant.findOne({ 
-      storeName: { $regex: new RegExp(`^${req.query.storeName}$`, 'i') } 
-    });
+    const searchRegex = new RegExp(`^${req.query.storeName}$`, 'i');
+
+const merchant = await Merchant.findOne({
+  $or: [
+    { storeName: searchRegex },
+    { slug: searchRegex }
+  ]
+});
     
     if (!merchant) {
       return next(new AppError('المتجر غير موجود', 404));
@@ -108,7 +126,7 @@ const getProduct = catchAsync(async (req, res, next) => {
  * Update a product.
  */
 const updateProduct = catchAsync(async (req, res, next) => {
-  const allowedFields = ['name', 'price', 'stockCount', 'description', 'sku', 'isActive'];
+  const allowedFields = ['name', 'price', 'stockCount', 'description', 'sku', 'isActive', 'imageUrl']; // ✅ FIX: أضفنا imageUrl
   const updateData = {};
 
   allowedFields.forEach((field) => {

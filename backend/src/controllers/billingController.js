@@ -23,7 +23,7 @@ const subscribe = catchAsync(async (req, res, next) => {
 
   // في Stripe Subscription، بنحتاج نربط الـ Payment Method بالعميل أولاً
   const result = await billingService.createSubscription(
-    req.merchant, // نمرر كائن التاجر بالكامل
+    req.merchant._id, // ✅ FIX: نمرر الـ ID بس — billingService.createSubscription بيعمل findById داخلياً
     plan,
     paymentMethodId
   );

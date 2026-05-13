@@ -13,6 +13,8 @@ const AppError     = require('./src/utils/appError');
 // ── Route Imports ────────────────────────────────────────────────────────────
 const v1Router      = require('./src/routes/v1');
 const webhookRouter = require('./src/routes/v1/webhook.routes');
+// ✅ استدعاء राوت الـ OTP بالمسار الصحيح
+const otpRoutes     = require('./src/routes/v1/otp.routes'); 
 
 const app = express();
 
@@ -76,7 +78,7 @@ app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 // ✅ المسارات (Routes)
 // ─────────────────────────────────────────────────────────────────────────────
 
-// 1. المسار الترحيبي (لحل مشكلة 404 في Health Check الخاص بـ Render)
+// 1. المسار الترحيبي
 app.get('/', (req, res) => {
   res.status(200).json({
     status: 'success',
@@ -98,6 +100,8 @@ app.get('/health', (req, res) => {
 
 // 3. الـ API Routes
 app.use('/api/v1/webhooks', webhookRouter);
+// ✅ راوت الـ OTP أُضيف هنا "بعد" الـ express.json() عشان يعرف يقرأ الإيميل
+app.use('/api/v1/otp', otpRoutes); 
 app.use('/api/v1', v1Router);
 
 // ── 404 Handler ───────────────────────────────────────────────────────────

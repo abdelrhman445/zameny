@@ -4,10 +4,17 @@ export interface Merchant {
   name: string;
   email: string;
   storeName: string;
-  storeSlug?: string;
+  slug: string;           // ✅ FIX: slug مشتق من storeName — يُستخدم في URLs
+  storeSlug?: string;     // للتوافق مع الكود القديم
   telegramChatId?: string;
   isActive: boolean;
   createdAt: string;
+  // Billing
+  plan?: 'Free' | 'Pro' | 'Enterprise';
+  subscriptionStatus?: 'Active' | 'Past_Due' | 'Canceled';
+  isPaidPlan?: boolean;
+  productLimit?: number;
+  nextBillingDate?: string | null;
 }
 
 export interface AuthResponse {
@@ -32,6 +39,7 @@ export interface Product {
   stockCount: number;
   isActive: boolean;
   inStock: boolean;
+  imageUrl?: string | null; // ✅ FIX: أضفنا imageUrl
   createdAt: string;
   updatedAt: string;
 }

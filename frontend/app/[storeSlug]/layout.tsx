@@ -6,6 +6,7 @@ import { useCartStore } from '@/store/useCartStore';
 import CartSheet from '@/components/storefront/CartSheet';
 import { Merchant } from '@/types';
 import { cn } from '@/lib/utils';
+import Image from 'next/image';
 
 interface StorefrontLayoutProps {
   children: React.ReactNode;
@@ -50,14 +51,22 @@ export default function StorefrontLayout({ children, params }: StorefrontLayoutP
           
           {/* Store Info */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-700 flex items-center justify-center flex-shrink-0 shadow-sm border border-indigo-100">
-              <Store className="w-5 h-5 text-white" />
+            {/* التعديل هنا: دائرة بيضاء نظيفة بحدود خفيفة */}
+            <div className="w-11 h-11 rounded-full bg-white flex items-center justify-center flex-shrink-0 shadow-sm border border-slate-200 overflow-hidden">
+              <Image 
+                src="/icon.svg" 
+                alt="شعار الموقع" 
+                width={44} // كبرناها شوية عشان تملى الدائرة
+                height={44} 
+                className="object-cover w-full h-full"
+                priority
+              />
             </div>
+            
             <div className="flex flex-col">
               <p className="font-black text-slate-900 text-base sm:text-lg leading-none tracking-tight truncate max-w-[150px] sm:max-w-xs" title={displayStoreName}>
                 {displayStoreName}
               </p>
-              <p className="text-[11px] font-medium text-slate-500 mt-1">متجر إلكتروني موثق</p>
             </div>
           </div>
 
@@ -91,12 +100,8 @@ export default function StorefrontLayout({ children, params }: StorefrontLayoutP
 
       {/* ── Minimalist Footer ── */}
       <footer className="border-t border-slate-200/60 bg-white/50 py-8 text-center mt-auto">
-        <p className="text-sm font-medium text-slate-500 flex items-center justify-center gap-2">
-          يعمل بواسطة
-          <span className="inline-flex items-center gap-1.5 font-black text-slate-800 hover:text-indigo-600 transition-colors cursor-default">
-            <Zap className="w-4 h-4 text-indigo-500 fill-indigo-500" />
-            Zameny
-          </span>
+        <p className="text-sm text-slate-600">
+          Zameny
         </p>
       </footer>
 

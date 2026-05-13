@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard, ShoppingCart, Package, Users, Settings,
-  Plug, ChevronLeft, ChevronRight, Zap, LogOut, Store, Menu, X
+  Plug, ChevronLeft, ChevronRight, LogOut, Store, Menu, X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useMerchantStore } from '@/store/useMerchantStore';
@@ -30,17 +31,15 @@ export default function Sidebar() {
 
   // اكتشاف حجم الشاشة عشان نتعامل مع الموبايل بشكل مختلف
   useEffect(() => {
-    // 1. إغلاق القائمة أوتوماتيك مرة واحدة فقط عند التحميل (لو الشاشة موبايل والقائمة مفتوحة)
     if (window.innerWidth < 768 && !sidebarCollapsed) {
       toggleSidebar(); 
     }
 
-    // 2. مراقبة تغيير حجم الشاشة لتحديث حالة الـ isMobile فقط (بدون التداخل مع فتح/قفل القائمة)
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
     };
     
-    handleResize(); // الفحص عند التحميل
+    handleResize(); 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -50,7 +49,6 @@ export default function Sidebar() {
     router.push('/login');
   };
 
-  // إغلاق القائمة في الموبايل بمجرد الضغط على أي رابط
   const handleNavClick = () => {
     if (isMobile && !sidebarCollapsed) {
       toggleSidebar();
@@ -83,20 +81,24 @@ export default function Sidebar() {
       <aside
         className={cn(
           'fixed right-0 top-0 h-screen bg-[#030712] border-l border-slate-800/60 text-slate-300 flex flex-col transition-all duration-300 z-50 shadow-2xl',
-          // المنطق هنا:
-          // الديسكتوب (md): القائمة دايماً ظاهرة بس العرض بيتغير (w-16 أو w-64)
-          // الموبايل: العرض دايماً 64 بس بتتحرك بره الشاشة (translate-x-full) أو تدخل الشاشة
           'md:translate-x-0',
           sidebarCollapsed ? 'translate-x-full w-64 md:w-16' : 'translate-x-0 w-64'
         )}
       >
         {/* Logo & Branding */}
-        <div className="flex items-center justify-between px-4 py-6 border-b border-slate-800/60 transition-all">
+        <div className={cn(
+          "flex items-center px-4 py-6 border-b border-slate-800/60 transition-all h-20",
+          sidebarCollapsed && !isMobile ? "justify-center px-0" : "justify-between"
+        )}>
           <div className="flex items-center gap-3">
-            <div className="flex-shrink-0 w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-700 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-              <Zap className="w-4 h-4 text-white fill-white" />
-            </div>
-            {/* في الموبايل، النص دايماً ظاهر لما القائمة تفتح */}
+            <Image 
+              src="/icon.svg" 
+              alt="Zameny Logo" 
+              width={32} 
+              height={32} 
+              className="flex-shrink-0 w-8 h-8 object-contain"
+            />
+            
             {(!sidebarCollapsed || isMobile) && (
               <div className="min-w-0 flex flex-col animate-fade-in">
                 <p className="text-xl font-black text-white leading-none tracking-tight">Zameny</p>
@@ -104,7 +106,6 @@ export default function Sidebar() {
             )}
           </div>
           
-          {/* زرار قفل القائمة للموبايل فقط */}
           <button 
             onClick={toggleSidebar}
             className="md:hidden p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
@@ -137,7 +138,9 @@ export default function Sidebar() {
                 onClick={handleNavClick}
                 title={sidebarCollapsed && !isMobile ? link.label : undefined}
                 className={cn(
-                  'flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-bold transition-all duration-200 group relative',
+                  'flex items-center rounded-xl text-sm font-bold transition-all duration-200 group relative',
+                  // ✅ تعديل هنا لضمان توسيط الأيقونات في حالة الطي بدون مسافات زائدة
+                  sidebarCollapsed && !isMobile ? 'justify-center p-3' : 'gap-3 px-3 py-3',
                   isActive
                     ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20'
                     : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/50'
@@ -161,8 +164,9 @@ export default function Sidebar() {
           <button
             onClick={handleLogout}
             className={cn(
-              'w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-bold transition-all duration-200',
-              'text-slate-400 hover:text-rose-500 hover:bg-rose-500/10'
+              'w-full flex items-center rounded-xl text-sm font-bold transition-all duration-200 text-slate-400 hover:text-rose-500 hover:bg-rose-500/10',
+              // ✅ تعديل هنا لتوسيط أيقونة الخروج وقت الطي
+              sidebarCollapsed && !isMobile ? 'justify-center p-3' : 'gap-3 px-3 py-3'
             )}
             title={sidebarCollapsed && !isMobile ? 'تسجيل الخروج' : undefined}
           >
@@ -174,7 +178,11 @@ export default function Sidebar() {
           <Button
             variant="ghost"
             onClick={toggleSidebar}
-            className="hidden md:flex w-full h-12 items-center justify-center rounded-xl text-slate-500 hover:text-slate-300 hover:bg-slate-800/50 transition-colors"
+            className={cn(
+              "hidden md:flex w-full h-12 items-center justify-center rounded-xl text-slate-500 hover:text-slate-300 hover:bg-slate-800/50 transition-colors",
+              // ✅ الحل: إزالة الـ padding الداخلي لزرار shadcn وقت الطي عشان الأيقونة متختفيش
+              sidebarCollapsed ? "px-0" : "px-4"
+            )}
             title={sidebarCollapsed ? 'توسيع القائمة' : 'طي القائمة'}
           >
             {sidebarCollapsed ? (

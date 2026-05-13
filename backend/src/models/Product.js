@@ -41,6 +41,12 @@ const productSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    // ✅ FIX: أضفنا imageUrl للمنتج — يُخزَّن رابط Cloudinary أو S3
+    imageUrl: {
+      type:    String,
+      default: null,
+      trim:    true,
+    },
   },
   {
     timestamps: true,

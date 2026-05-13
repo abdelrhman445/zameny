@@ -51,8 +51,17 @@ const merchantSchema = new mongoose.Schema(
     storeName: {
       type:      String,
       required:  [true, 'Store name is required.'],
+      unique:    true, // ✅ FIX: أضفنا unique لمنع تكرار أسماء المتاجر
       trim:      true,
       maxlength: [150, 'Store name cannot exceed 150 characters.'],
+    },
+    // ✅ FIX: أضفنا slug للاستخدام في URLs — مشتق من storeName
+    slug: {
+      type:      String,
+      unique:    true,
+      sparse:    true, // يسمح بـ null لو لم يُعيَّن بعد
+      lowercase: true,
+      trim:      true,
     },
     telegramChatId: {
       type:    String,
@@ -92,6 +101,11 @@ const merchantSchema = new mongoose.Schema(
       select:  false,
       trim:    true,
     },
+    // ✅ FIX: أضفنا nextBillingDate — بيتحدث من Stripe webhook
+    nextBillingDate: {
+      type:    Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
@@ -113,6 +127,20 @@ merchantSchema.virtual('isPaidPlan').get(function () {
 merchantSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
   this.password = await bcrypt.hash(this.password, 12);
+  next();
+});
+
+// ✅ FIX: Pre-save — توليد slug من storeName أوتوماتيك عند الإنشاء أو التحديث
+merchantSchema.pre('save', function (next) {
+  if (this.isModified('storeName') || !this.slug) {
+    this.slug = this.storeName
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '-')           // مسافات → شرطة
+      .replace(/[^\u0600-\u06FFa-z0-9\-]/g, '') // يحتفظ بعربي + لاتيني + أرقام + شرطة
+      .replace(/-+/g, '-')            // شرطات متعددة → شرطة واحدة
+      .replace(/^-|-$/g, '');         // يشيل الشرطة من البداية والنهاية
+  }
   next();
 });
 

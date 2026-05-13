@@ -105,7 +105,8 @@ router.post('/stripe', async (req, res) => {
     if (event.type.startsWith('invoice.') || event.type.startsWith('customer.')) {
       logger.info(`[Webhook/Stripe] Billing event received: ${event.type}`);
       try {
-        const result = await billingService.handleStripeWebhook(event, signature, req.app.get('socketio'));
+        // ✅ FIX: نمرر الـ event مباشرة بعد ما تم التحقق منه فوق — مش rawBody مرة تانية
+        const result = await billingService.handleStripeWebhookEvent(event);
         return res.status(200).json(result);
       } catch (error) {
         logger.error(`[Webhook/Stripe] Billing service error:`, { message: error.message });

@@ -3,15 +3,13 @@
 import React, { useState } from 'react';
 import { 
   Search, Phone, ShieldAlert, ShieldCheck, AlertTriangle, 
-  Package, UserX, History, Activity, TrendingDown 
+  Package, UserX, History, Activity, TrendingDown, Laptop
 } from 'lucide-react';
 import { CustomerHistoryResponse } from '@/types';
 import { cn, formatCurrency, formatDateShort } from '@/lib/utils';
 import FraudBadge from '@/components/dashboard/FraudBadge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 import { PageLoading } from '@/components/shared/LoadingSpinner';
 import api from '@/lib/api';
 
@@ -21,10 +19,13 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  Pending: 'bg-slate-100 text-slate-600', Flagged: 'bg-rose-100 text-rose-700',
-  Confirmed: 'bg-blue-100 text-blue-700', Shipped: 'bg-indigo-100 text-indigo-700',
-  Delivered: 'bg-emerald-100 text-emerald-700', RTO: 'bg-amber-100 text-amber-700',
-  Cancelled: 'bg-slate-100 text-slate-500',
+  Pending: 'bg-slate-100 text-slate-600 border-slate-200', 
+  Flagged: 'bg-rose-50 text-rose-700 border-rose-200',
+  Confirmed: 'bg-blue-50 text-blue-700 border-blue-200', 
+  Shipped: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+  Delivered: 'bg-emerald-50 text-emerald-700 border-emerald-200', 
+  RTO: 'bg-amber-50 text-amber-700 border-amber-200',
+  Cancelled: 'bg-slate-50 text-slate-500 border-slate-200',
 };
 
 export default function CustomersPage() {
@@ -59,27 +60,25 @@ export default function CustomersPage() {
 
   const ch = data?.customerHistory;
 
-  // تحديد مستوى الخطر لتلوين الواجهة
+  // تحديد مستوى الخطر
   const isDanger = ch?.isBlacklisted || ch?.riskLevel === 'High';
   const isWarning = !isDanger && ch?.riskLevel === 'Medium';
   const isSafe = ch?.riskLevel === 'Low' && !ch?.isBlacklisted;
 
   return (
-    <div className="space-y-6 animate-fade-in pb-10" dir="rtl">
+    <div className="space-y-6 sm:space-y-8 animate-fade-in pb-10 sm:pb-14 max-w-7xl mx-auto" dir="rtl">
       
       {/* ── Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">بحث وسجل العملاء</h1>
-          <p className="text-sm font-medium text-slate-500 mt-1.5">
-            ابحث برقم هاتف العميل لكشف تاريخه الشرائي ومعدل المرتجعات قبل تأكيد الشحن.
-          </p>
-        </div>
+      <div className="px-1 sm:px-0">
+        <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">استكشاف العملاء</h1>
+        <p className="text-xs sm:text-sm font-medium text-slate-500 mt-1.5 sm:mt-2">
+          ابحث برقم الهاتف لكشف التاريخ الشرائي وتقييم الأمان قبل الشحن.
+        </p>
       </div>
 
       {/* ── Premium Search Bar ── */}
-      <div className="bg-white border border-slate-200/60 p-3.5 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.03)] flex flex-col sm:flex-row gap-3 items-center max-w-2xl transition-all">
-        <div className="relative w-full group">
+      <div className="bg-white border border-slate-200/60 p-2 sm:p-2.5 rounded-[1.25rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col sm:flex-row gap-2 sm:gap-3 max-w-2xl transition-all mx-1 sm:mx-0">
+        <div className="relative w-full flex-1 group">
           <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
             <Phone className="w-5 h-5 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
           </div>
@@ -87,37 +86,39 @@ export default function CustomersPage() {
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            placeholder="أدخل رقم هاتف العميل (مثال: 010...)"
+            placeholder="أدخل رقم هاتف العميل"
             autoComplete="off"
-            className="pr-12 h-14 bg-slate-50/50 border-slate-200 focus-visible:ring-indigo-500 focus-visible:border-indigo-500 rounded-xl text-lg font-bold text-slate-900 transition-all tracking-wide"
-            dir="ltr"
+            className="pr-12 h-12 sm:h-14 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 text-base sm:text-lg font-black text-slate-900 placeholder:text-slate-400 placeholder:font-medium tracking-widest transition-all"
+            dir="rtl"
             autoFocus
           />
         </div>
-        <Button 
-          onClick={handleSearch} 
-          disabled={loading || !phone.trim()} 
-          className="w-full sm:w-auto h-14 px-8 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/20 transition-all text-base"
-        >
-          <Search className="w-5 h-5 ml-2" /> بحث
-        </Button>
+        <div className="w-full sm:w-auto shrink-0 flex items-center justify-center p-1 sm:p-0">
+           <Button 
+            onClick={handleSearch} 
+            disabled={loading || !phone.trim()} 
+            className="w-full sm:w-32 h-12 sm:h-14 bg-slate-900 hover:bg-indigo-600 text-white font-bold rounded-xl shadow-md transition-all text-sm"
+          >
+            <Search className="w-4 h-4 ml-1.5" /> بحث
+          </Button>
+        </div>
       </div>
 
       {/* ── Loading State ── */}
       {loading && (
-        <div className="py-12">
+        <div className="py-16 sm:py-24">
           <PageLoading label="جاري استخراج السجل من قاعدة البيانات..." />
         </div>
       )}
 
       {/* ── Error / Not Found State ── */}
       {!loading && error && (
-        <div className="py-16 flex flex-col items-center justify-center bg-white/50 border border-dashed border-slate-300 rounded-3xl animate-fade-in">
-          <div className="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center shadow-sm mb-4 border border-slate-100">
-            <UserX className="w-10 h-10 text-slate-400" />
+        <div className="py-16 sm:py-20 mx-1 sm:mx-0 flex flex-col items-center justify-center bg-white/40 border border-dashed border-slate-300 rounded-[2rem] animate-fade-in">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-3xl flex items-center justify-center shadow-sm mb-4 sm:mb-5 border border-slate-100">
+            <UserX className="w-8 h-8 sm:w-10 sm:h-10 text-slate-300" />
           </div>
-          <h3 className="text-xl font-bold text-slate-800">{error}</h3>
-          <p className="text-slate-500 text-sm mt-2 max-w-sm text-center font-medium leading-relaxed">
+          <h3 className="text-lg sm:text-xl font-black text-slate-800 text-center px-4">{error}</h3>
+          <p className="text-slate-500 text-xs sm:text-sm mt-2 max-w-sm text-center font-medium leading-relaxed px-4">
             هذا العميل جديد تماماً أو أن الرقم مكتوب بشكل خاطئ.
           </p>
         </div>
@@ -125,12 +126,12 @@ export default function CustomersPage() {
 
       {/* ── Initial Empty State ── */}
       {!loading && !error && !searched && (
-        <div className="py-24 flex flex-col items-center justify-center bg-white/30 border border-dashed border-slate-200 rounded-3xl">
-          <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-[0_8px_30px_rgb(0,0,0,0.04)] mb-6 border border-slate-100">
-            <Search className="w-10 h-10 text-indigo-200" />
+        <div className="py-20 sm:py-24 mx-1 sm:mx-0 flex flex-col items-center justify-center bg-white/40 border border-dashed border-slate-300 rounded-[2rem]">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-3xl flex items-center justify-center shadow-[0_8px_30px_rgb(0,0,0,0.03)] mb-4 sm:mb-5 border border-slate-100">
+            <Search className="w-8 h-8 sm:w-10 sm:h-10 text-slate-300" />
           </div>
-          <h3 className="text-2xl font-black text-slate-800">مستكشف العملاء</h3>
-          <p className="text-slate-500 text-base mt-2 max-w-md text-center font-medium leading-relaxed">
+          <h3 className="text-xl sm:text-2xl font-black text-slate-800 text-center px-4">مستكشف العملاء</h3>
+          <p className="text-slate-500 text-xs sm:text-sm mt-2 max-w-sm text-center font-medium leading-relaxed px-6">
             استخدم محرك البحث بالأعلى لاستعراض تفاصيل أي عميل وتقييم مدى أمان التعامل معه.
           </p>
         </div>
@@ -138,90 +139,88 @@ export default function CustomersPage() {
 
       {/* ── Customer Profile Dashboard ── */}
       {!loading && !error && data && ch && (
-        <div className="space-y-6 animate-fade-in-up">
+        <div className="space-y-5 sm:space-y-6 animate-fade-in-up">
           
-          {/* Profile Header Card */}
-          <div className="bg-white border border-slate-200/60 rounded-[2rem] p-6 md:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden">
+          {/* 1. Profile Header Card */}
+          <div className="bg-white border border-slate-200/60 rounded-[1.5rem] sm:rounded-[2rem] p-5 sm:p-8 md:p-10 shadow-[0_4px_20px_rgb(0,0,0,0.02)] relative overflow-hidden">
             {/* Ambient Background Glow based on Risk */}
             <div className={cn(
-              "absolute top-0 left-0 w-64 h-64 rounded-full blur-3xl -ml-20 -mt-20 pointer-events-none opacity-20",
+              "absolute top-0 left-0 w-48 h-48 sm:w-64 sm:h-64 rounded-full blur-3xl -ml-16 -mt-16 sm:-ml-20 sm:-mt-20 pointer-events-none opacity-10",
               isDanger ? "bg-rose-500" : isWarning ? "bg-amber-500" : "bg-emerald-500"
             )} />
 
-            <div className="flex flex-col sm:flex-row sm:items-center gap-6 relative z-10">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 relative z-10">
               {/* Avatar */}
               <div className={cn(
-                'w-20 h-20 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm border-2',
+                'w-16 h-16 sm:w-24 sm:h-24 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm border-2',
                 isDanger ? 'bg-rose-50 border-rose-100' : isWarning ? 'bg-amber-50 border-amber-100' : 'bg-emerald-50 border-emerald-100'
               )}>
                 {isDanger ? (
-                  <ShieldAlert className="w-10 h-10 text-rose-600" />
+                  <ShieldAlert className="w-8 h-8 sm:w-12 sm:h-12 text-rose-600" />
                 ) : isSafe ? (
-                  <ShieldCheck className="w-10 h-10 text-emerald-600" />
+                  <ShieldCheck className="w-8 h-8 sm:w-12 sm:h-12 text-emerald-600" />
                 ) : (
-                  <AlertTriangle className="w-10 h-10 text-amber-600" />
+                  <AlertTriangle className="w-8 h-8 sm:w-12 sm:h-12 text-amber-600" />
                 )}
               </div>
 
               {/* Info */}
               <div className="flex-1">
-                <div className="flex flex-wrap items-center gap-3 mb-2">
-                  <h2 className="text-2xl font-black text-slate-900 tracking-wider" dir="ltr">{ch.phoneNumber}</h2>
+                <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 mb-2 sm:mb-3">
+                  <h2 className="text-xl sm:text-3xl font-black text-slate-900 tracking-wider" dir="ltr">{ch.phoneNumber}</h2>
                   {ch.isBlacklisted && (
-                    <span className="px-3 py-1 bg-rose-600 text-white text-xs font-bold rounded-lg shadow-sm flex items-center gap-1">
+                    <span className="px-2.5 py-1 bg-rose-600 text-white text-[10px] sm:text-xs font-black rounded-lg shadow-sm flex items-center gap-1.5">
                       <ShieldAlert className="w-3.5 h-3.5" /> عميل محظور
                     </span>
                   )}
                   <FraudBadge
                     fraudAnalysis={{
-                      score: ch.fraudScore,
-                      riskLevel: ch.riskLevel,
+                      score: ch.fraudScore ?? 100,
+                      riskLevel: ch.riskLevel || 'Low',
                       reason: '',
-                      rtoRate: ch.rtoRate,
-                      isNewCustomer: ch.totalOrders === 0,
+                      rtoRate: ch.rtoRate ?? 0,
+                      isNewCustomer: (ch.totalOrders ?? 0) === 0,
                       ipMismatch: false,
                     }}
                     showScore
                   />
                 </div>
                 {ch.lastOrderDate ? (
-                  <p className="text-sm font-medium text-slate-500 flex items-center gap-1.5">
+                  <p className="text-xs sm:text-sm font-medium text-slate-500 flex items-center gap-1.5">
                     <History className="w-4 h-4 text-slate-400" />
                     آخر طلب مسجل بتاريخ: <strong className="text-slate-700">{formatDateShort(ch.lastOrderDate)}</strong>
                   </p>
                 ) : (
-                  <p className="text-sm font-medium text-slate-500">لا يوجد تاريخ طلبات سابقة</p>
+                  <p className="text-xs sm:text-sm font-medium text-slate-500">لا يوجد تاريخ طلبات سابقة</p>
                 )}
               </div>
             </div>
           </div>
 
-          {/* KPI Stats Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* 2. KPI Stats Cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
             {[
-              { label: 'إجمالي الطلبات', value: ch.totalOrders, icon: Package, color: 'indigo', format: (v: number) => v },
-              { label: 'طلبات مرتجعة (RTO)', value: ch.rtoOrders, icon: TrendingDown, color: ch.rtoOrders > 0 ? 'rose' : 'emerald', format: (v: number) => v },
-              { label: 'نسبة الإرجاع', value: ch.rtoRate, icon: Activity, color: ch.rtoRate > 0.3 ? 'rose' : ch.rtoRate > 0.15 ? 'amber' : 'emerald', format: (v: number) => `${(v * 100).toFixed(1)}%` },
-              { label: 'درجة الأمان', value: ch.fraudScore, icon: ShieldCheck, color: ch.fraudScore >= 80 ? 'emerald' : ch.fraudScore >= 50 ? 'amber' : 'rose', format: (v: number) => `${v}/100` },
+              { label: 'إجمالي الطلبات', value: ch.totalOrders ?? 0, icon: Package, color: 'indigo', format: (v: number) => v },
+              { label: 'طلبات مرتجعة (RTO)', value: ch.rtoOrders ?? 0, icon: TrendingDown, color: (ch.rtoOrders ?? 0) > 0 ? 'rose' : 'emerald', format: (v: number) => v },
+              { label: 'نسبة الإرجاع', value: ch.rtoRate ?? 0, icon: Activity, color: (ch.rtoRate ?? 0) > 0.3 ? 'rose' : (ch.rtoRate ?? 0) > 0.15 ? 'amber' : 'emerald', format: (v: number) => `${(v * 100).toFixed(1)}%` },
+              { label: 'مؤشر الأمان', value: ch.fraudScore ?? 100, icon: ShieldCheck, color: (ch.fraudScore ?? 100) >= 80 ? 'emerald' : (ch.fraudScore ?? 100) >= 50 ? 'amber' : 'rose', format: (v: number) => `${v}/100` },
             ].map((stat) => {
               const Icon = stat.icon;
               return (
-                <div key={stat.label} className={cn(
-                  'rounded-2xl p-5 border relative overflow-hidden group',
-                  stat.color === 'indigo' ? 'bg-indigo-50/50 border-indigo-100' :
-                  stat.color === 'emerald' ? 'bg-emerald-50/50 border-emerald-100' :
-                  stat.color === 'amber' ? 'bg-amber-50/50 border-amber-100' :
-                  'bg-rose-50/50 border-rose-100'
-                )}>
-                  <div className="flex items-center justify-between mb-3 relative z-10">
-                    <p className="text-xs font-bold text-slate-500">{stat.label}</p>
-                    <Icon className={cn("w-5 h-5 opacity-50", 
-                      stat.color === 'indigo' ? 'text-indigo-600' :
-                      stat.color === 'emerald' ? 'text-emerald-600' :
-                      stat.color === 'amber' ? 'text-amber-600' : 'text-rose-600'
-                    )} />
+                <div key={stat.label} className="bg-white rounded-2xl p-4 sm:p-6 border border-slate-200/60 shadow-sm relative overflow-hidden group flex flex-col justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 sm:mb-4 gap-2 relative z-10">
+                    <p className="text-[11px] sm:text-xs font-bold text-slate-500">{stat.label}</p>
+                    <div className={cn(
+                      "w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl flex items-center justify-center border shrink-0",
+                      stat.color === 'indigo' ? 'bg-indigo-50 border-indigo-100 text-indigo-600' :
+                      stat.color === 'emerald' ? 'bg-emerald-50 border-emerald-100 text-emerald-600' :
+                      stat.color === 'amber' ? 'bg-amber-50 border-amber-100 text-amber-600' : 
+                      'bg-rose-50 border-rose-100 text-rose-600'
+                    )}>
+                      <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    </div>
                   </div>
-                  <p className={cn('text-3xl font-black relative z-10',
+                  <p className={cn('text-xl sm:text-3xl font-black relative z-10 tracking-tight',
                     stat.color === 'indigo' ? 'text-indigo-900' :
                     stat.color === 'emerald' ? 'text-emerald-900' :
                     stat.color === 'amber' ? 'text-amber-900' : 'text-rose-900'
@@ -231,100 +230,134 @@ export default function CustomersPage() {
             })}
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-6">
             
-            {/* Risk Progress Bar Card */}
-            <Card className="lg:col-span-1 border-slate-200/60 shadow-[0_4px_20px_rgb(0,0,0,0.02)] rounded-2xl h-max">
-              <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-4 rounded-t-2xl">
-                <CardTitle className="text-base font-bold text-slate-800">تفاصيل الخطر و IPs</CardTitle>
-              </CardHeader>
-              <CardContent className="pt-6 space-y-6">
-                <div>
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="font-bold text-slate-600">مؤشر الثقة</span>
-                    <span className="font-black text-slate-900">{ch.fraudScore} من 100</span>
-                  </div>
-                  <Progress
-                    value={ch.fraudScore}
-                    className={cn('h-3 bg-slate-100',
-                      ch.fraudScore >= 80 ? '[&>div]:bg-emerald-500' :
-                      ch.fraudScore >= 50 ? '[&>div]:bg-amber-500' :
-                      '[&>div]:bg-rose-500'
+            {/* 3. Risk Progress & IPs */}
+            <div className="lg:col-span-1 bg-white border border-slate-200/60 shadow-sm rounded-[1.5rem] p-5 sm:p-7 h-max space-y-6">
+              <h3 className="text-base font-black text-slate-800">تفاصيل الخطر والأجهزة</h3>
+              
+              {/* Custom Smooth Progress Bar */}
+              <div>
+                <div className="flex justify-between text-xs sm:text-sm mb-2.5">
+                  <span className="font-bold text-slate-600">مؤشر الثقة</span>
+                  <span className="font-black text-slate-900">{ch.fraudScore ?? 100} / 100</span>
+                </div>
+                <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                  <div 
+                    className={cn("h-full rounded-full transition-all duration-1000", 
+                      (ch.fraudScore ?? 100) >= 80 ? 'bg-emerald-500' : 
+                      (ch.fraudScore ?? 100) >= 50 ? 'bg-amber-500' : 'bg-rose-500'
                     )}
+                    style={{ width: `${ch.fraudScore ?? 100}%` }}
                   />
                 </div>
+              </div>
 
-                <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 space-y-3">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="font-semibold text-slate-500">حالة الحظر:</span>
-                    <span className={cn('font-bold flex items-center gap-1.5', ch.isBlacklisted ? 'text-rose-600' : 'text-emerald-600')}>
-                      {ch.isBlacklisted ? <><ShieldAlert className="w-4 h-4"/> محظور عالمياً</> : <><ShieldCheck className="w-4 h-4"/> سليم</>}
+              <div className="bg-slate-50/50 rounded-xl p-4 sm:p-5 border border-slate-100 space-y-4">
+                <div className="flex items-center justify-between text-xs sm:text-sm">
+                  <span className="font-semibold text-slate-500">حالة الحظر:</span>
+                  <span className={cn('text-[10px] sm:text-xs font-black flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border', 
+                    ch.isBlacklisted ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                  )}>
+                    {ch.isBlacklisted ? <><ShieldAlert className="w-3.5 h-3.5"/> محظور عالمياً</> : <><ShieldCheck className="w-3.5 h-3.5"/> سليم</>}
+                  </span>
+                </div>
+                
+                <div className="pt-4 border-t border-slate-200/60">
+                  <div className="flex items-center justify-between text-xs sm:text-sm mb-3.5">
+                    <span className="font-semibold text-slate-500 flex items-center gap-1.5">
+                      <Laptop className="w-4 h-4 text-slate-400" /> الأجهزة (IPs):
+                    </span>
+                    <span className="font-black text-slate-800 bg-white px-2.5 py-1 rounded-md border border-slate-200 text-[10px] sm:text-xs">
+                      {(ch.knownIps || []).length} عنوان مسجل
                     </span>
                   </div>
-                  <div className="flex items-center justify-between text-sm pt-2 border-t border-slate-200/60">
-                    <span className="font-semibold text-slate-500">الأجهزة (IPs):</span>
-                    <span className="font-bold text-slate-900">{ch.knownIps.length} عنوان مسجل</span>
-                  </div>
                   
-                  {ch.knownIps.length > 0 && (
-                    <div className="flex flex-wrap gap-2 pt-2">
-                      {ch.knownIps.map((ip) => (
-                        <span key={ip} className="font-mono text-[11px] font-medium bg-white border border-slate-200 text-slate-600 px-2 py-1 rounded-md shadow-sm" dir="ltr">{ip}</span>
+                  {(ch.knownIps || []).length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {ch.knownIps?.map((ip) => (
+                        <span key={ip} className="font-mono text-[10px] sm:text-xs font-bold bg-white border border-slate-200 text-slate-600 px-2 sm:px-2.5 py-1 rounded-md shadow-sm" dir="ltr">{ip}</span>
                       ))}
                     </div>
+                  ) : (
+                    <p className="text-xs text-slate-400 font-medium">لا توجد أجهزة مسجلة</p>
                   )}
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
-            {/* Recent Orders Card */}
-            <Card className="lg:col-span-2 border-slate-200/60 shadow-[0_4px_20px_rgb(0,0,0,0.02)] rounded-2xl overflow-hidden">
-              <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-4">
-                <CardTitle className="text-base font-bold text-slate-800 flex items-center gap-2">
-                  <History className="w-5 h-5 text-slate-400" /> آخر طلبات العميل
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
+            {/* 4. Recent Orders Table/List */}
+            <div className="lg:col-span-2 bg-white border border-slate-200/60 shadow-sm rounded-[1.5rem] overflow-hidden flex flex-col">
+              <div className="px-5 sm:px-6 py-4 sm:py-5 border-b border-slate-100 bg-slate-50/50">
+                <h3 className="text-base font-black text-slate-800 flex items-center gap-2.5">
+                  <History className="w-5 h-5 text-indigo-500" /> آخر طلبات العميل
+                </h3>
+              </div>
+              
+              <div className="p-0 overflow-x-auto">
                 {data.recentOrders && data.recentOrders.length > 0 ? (
-                  <div className="divide-y divide-slate-100">
-                    {data.recentOrders.map((order, i) => (
-                      <div key={i} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-slate-50/50 transition-colors gap-4 sm:gap-0">
-                        <div className="flex items-center gap-3.5">
-                          <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center border border-indigo-100 shrink-0">
-                            <Package className="w-5 h-5 text-indigo-500" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-mono font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded inline-block mb-1">{order.orderNumber}</p>
-                            {order.createdAt && (
-                              <p className="text-[11px] font-medium text-slate-500">{formatDateShort(order.createdAt)}</p>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          {order.fraudAnalysis && (
-                            <FraudBadge fraudAnalysis={order.fraudAnalysis as Parameters<typeof FraudBadge>[0]['fraudAnalysis']} showScore />
-                          )}
-                          {order.status && (
-                            <span className={cn('text-xs px-2.5 py-1 rounded-lg font-bold border whitespace-nowrap', STATUS_COLORS[order.status] || 'bg-slate-100 text-slate-600 border-slate-200')}>
+                  <table className="w-full text-right text-sm">
+                    <thead className="bg-white border-b border-slate-100 hidden sm:table-header-group">
+                      <tr>
+                        <th className="px-6 py-4 font-bold text-slate-400 text-xs tracking-wider">رقم الطلب / التاريخ</th>
+                        <th className="px-6 py-4 font-bold text-slate-400 text-xs tracking-wider">الحالة</th>
+                        <th className="px-6 py-4 font-bold text-slate-400 text-xs tracking-wider">الأمان</th>
+                        <th className="px-6 py-4 font-bold text-slate-400 text-xs tracking-wider text-left">الإجمالي</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {data.recentOrders.map((order, i) => (
+                        <tr key={i} className="hover:bg-slate-50/50 transition-colors flex flex-col sm:table-row py-2 sm:py-0 border-b sm:border-0 border-slate-100 last:border-0">
+                          {/* Order Number & Date */}
+                          <td className="px-5 sm:px-6 py-3 sm:py-4 flex items-center gap-3 sm:table-cell">
+                            <div className="flex items-center gap-3">
+                              <div className="w-9 h-9 sm:w-10 sm:h-10 bg-slate-50 rounded-xl flex items-center justify-center border border-slate-100 shrink-0 hidden sm:flex">
+                                <Package className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400" />
+                              </div>
+                              <div className="flex flex-col gap-1 sm:gap-0.5">
+                                <span className="text-xs sm:text-sm font-mono font-bold text-slate-800 bg-slate-100 sm:px-1.5 py-0.5 px-2 rounded-md sm:rounded w-max">{order.orderNumber}</span>
+                                {order.createdAt && <span className="text-[10px] sm:text-[11px] font-medium text-slate-500">{formatDateShort(order.createdAt)}</span>}
+                              </div>
+                            </div>
+                          </td>
+                          
+                          {/* Status */}
+                          <td className="px-5 sm:px-6 py-1.5 sm:py-4">
+                            <span className={cn('text-[10px] sm:text-xs px-2 sm:px-2.5 py-1 rounded-md font-bold border inline-flex items-center gap-1.5', STATUS_COLORS[order.status] || 'bg-slate-50 text-slate-600 border-slate-200')}>
+                               <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-current opacity-70" />
                               {STATUS_LABELS[order.status] || order.status}
                             </span>
-                          )}
-                          {order.totalAmount !== undefined && (
-                            <span className="text-sm font-black text-slate-900 whitespace-nowrap w-24 text-left">
-                              {formatCurrency(order.totalAmount)}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                          </td>
+                          
+                          {/* Fraud Badge */}
+                          <td className="px-5 sm:px-6 py-1.5 sm:py-4">
+                            {order.fraudAnalysis && (
+                              <div className="scale-90 origin-right sm:scale-100">
+                                <FraudBadge fraudAnalysis={order.fraudAnalysis as Parameters<typeof FraudBadge>[0]['fraudAnalysis']} showScore />
+                              </div>
+                            )}
+                          </td>
+                          
+                          {/* Amount */}
+                          <td className="px-5 sm:px-6 pt-1.5 pb-4 sm:py-4 sm:text-left">
+                            {order.totalAmount !== undefined && (
+                              <span className="text-xs sm:text-sm font-black text-indigo-600 bg-indigo-50 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-md inline-block w-max">
+                                {formatCurrency(order.totalAmount)}
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 ) : (
-                  <div className="p-10 text-center">
-                    <p className="text-sm font-medium text-slate-500">لا توجد طلبات سريعة العرض لهذا العميل.</p>
+                  <div className="p-10 sm:p-14 flex flex-col items-center justify-center text-center">
+                     <Package className="w-8 h-8 sm:w-10 sm:h-10 text-slate-200 mb-3" />
+                    <p className="text-xs sm:text-sm font-medium text-slate-500">لا توجد طلبات سابقة مسجلة لهذا العميل في قاعدة البيانات.</p>
                   </div>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
           </div>
         </div>

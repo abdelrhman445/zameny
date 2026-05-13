@@ -146,6 +146,7 @@ const cancelSubscription = async (merchantId, immediately = false) => {
 
 /**
  * الـ Webhook المركزي — القلب النابض للـ A.E.E
+ * يقبل الـ raw body + signature ويتحقق بنفسه (للاستخدام المستقل)
  */
 const handleStripeWebhook = async (rawBody, signatureHeader) => {
   const stripe        = getStripe();
@@ -163,6 +164,15 @@ const handleStripeWebhook = async (rawBody, signatureHeader) => {
     throw new AppError(`Stripe webhook signature verification failed: ${err.message}`, 400);
   }
 
+  return handleStripeWebhookEvent(event);
+};
+
+/**
+ * ✅ FIX: دالة جديدة تقبل event تم التحقق منه مسبقاً
+ * للاستخدام من webhook.routes.js بعد ما يعمل constructEvent هناك
+ */
+const handleStripeWebhookEvent = async (event) => {
+  const stripe = getStripe();
   logger.info(`[BillingService] Stripe event received: ${event.type}`);
 
   const dataObject = event.data.object;
@@ -185,11 +195,18 @@ const handleStripeWebhook = async (rawBody, signatureHeader) => {
 
     // 2. اشتراك تاجر اتدفع (Recurring SaaS)
     case 'invoice.payment_succeeded': {
-      const merchantId = dataObject.subscription ? (await stripe.subscriptions.retrieve(dataObject.subscription)).metadata.merchantId : dataObject.metadata?.merchantId;
+      const merchantId = dataObject.subscription
+        ? (await stripe.subscriptions.retrieve(dataObject.subscription)).metadata.merchantId
+        : dataObject.metadata?.merchantId;
       if (merchantId) {
+        // ✅ FIX: إزلنا isPaidPlan لأنه virtual بيتحسب أوتوماتيك من الـ plan
+        // ✅ FIX: أضفنا nextBillingDate من بيانات الفاتورة
+        const nextBillingDate = dataObject.lines?.data?.[0]?.period?.end
+          ? new Date(dataObject.lines.data[0].period.end * 1000)
+          : null;
         await Merchant.findByIdAndUpdate(merchantId, {
           subscriptionStatus: 'Active',
-          isPaidPlan: true
+          ...(nextBillingDate && { nextBillingDate }),
         });
         logger.info(`[BillingService] SaaS Payment Succeeded → Merchant ${merchantId} set to Active`);
       }
@@ -211,7 +228,8 @@ const handleStripeWebhook = async (rawBody, signatureHeader) => {
     case 'customer.subscription.deleted': {
       const merchantId = dataObject.metadata?.merchantId;
       if (merchantId) {
-        await Merchant.findByIdAndUpdate(merchantId, { plan: 'Free', subscriptionStatus: 'Canceled', isPaidPlan: false });
+        // ✅ FIX: إزلنا isPaidPlan لأنه virtual — بيتحسب تلقائياً من plan
+        await Merchant.findByIdAndUpdate(merchantId, { plan: 'Free', subscriptionStatus: 'Canceled' });
         logger.info(`[BillingService] SaaS Sub Deleted → Merchant ${merchantId} downgraded to Free`);
       }
       break;
@@ -239,5 +257,6 @@ module.exports = {
   createSubscription,
   cancelSubscription,
   handleStripeWebhook,
+  handleStripeWebhookEvent,
   getOrCreateStripeCustomer,
 };

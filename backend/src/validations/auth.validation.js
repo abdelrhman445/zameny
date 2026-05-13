@@ -39,6 +39,13 @@ const forgotPasswordValidation = [
   handleValidationErrors,
 ];
 
+// ✅ FIX: الفاليشن الخاص بالتحقق من الـ OTP (منفصل عن forgot-password)
+const verifyOtpValidation = [
+  body('email').isEmail().withMessage('Valid email is required.').normalizeEmail(),
+  body('otp').trim().isLength({ min: 6, max: 6 }).withMessage('OTP must be exactly 6 digits.'),
+  handleValidationErrors,
+];
+
 // ✅ الفاليشن الخاص بتعيين كلمة المرور الجديدة
 const resetPasswordValidation = [
   body('email').isEmail().withMessage('Valid email is required.').normalizeEmail(),
@@ -55,6 +62,7 @@ module.exports = {
   registerValidation, 
   loginValidation, 
   forgotPasswordValidation,
+  verifyOtpValidation,
   resetPasswordValidation,
   handleValidationErrors 
 };

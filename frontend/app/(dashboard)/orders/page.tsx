@@ -179,7 +179,6 @@ export default function OrdersPage() {
       ) : (
         <div className="bg-white border border-slate-200/60 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden transition-all">
           
-          {/* ✅ حاوية الجدول مع تحديد أدنى للعرض وسكرول أفقي للموبايل */}
           <div className="w-full overflow-x-auto scrollbar-thin pb-2">
             <table className="w-full text-sm text-right min-w-[1050px]">
               <thead>
@@ -195,7 +194,7 @@ export default function OrdersPage() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {orders.map((order) => {
-                  const isHighRisk = order.fraudAnalysis.riskLevel === 'High';
+                  const isHighRisk = order.fraudAnalysis?.riskLevel === 'High';
                   return (
                     <tr
                       key={order._id}

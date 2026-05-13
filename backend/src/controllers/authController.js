@@ -26,6 +26,7 @@ const register = catchAsync(async (req, res, next) => {
     password,
     storeName,
     telegramChatId: telegramChatId || null,
+    // ✅ FIX: slug بيتولَّد من الـ pre-save hook في الموديل أوتوماتيك
   });
 
   sendTokenResponse(merchant, 201, res);
