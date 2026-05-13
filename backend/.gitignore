@@ -18,3 +18,7 @@ yarn-error.log*
 Thumbs.db
 
 firebaseServiceAccount.json
+
+.env.example
+
+API_ENDPOINTS.md
