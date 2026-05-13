@@ -174,12 +174,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         <span className="font-bold text-sm text-slate-700">الربط والتكامل</span>
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem asChild className="rounded-lg cursor-pointer hover:bg-slate-50 focus:bg-slate-50 py-2.5">
-                      <Link href="/settings" className="flex items-center gap-2.5">
-                        <Settings className="w-4 h-4 text-slate-400" />
-                        <span className="font-bold text-sm text-slate-700">إعدادات المتجر</span>
-                      </Link>
-                    </DropdownMenuItem>
+                    
                   </div>
 
                   <DropdownMenuSeparator className="bg-slate-100 my-1" />
