@@ -3,10 +3,9 @@
 import React, { useState } from 'react';
 import { 
   Search, Package, Truck, RefreshCcw, CreditCard, 
-  Mail, MessageCircle, Phone, ChevronDown, LifeBuoy
+  Mail, MessageCircle, ChevronDown, LifeBuoy
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 const HELP_CATEGORIES = [
@@ -43,16 +42,16 @@ export default function HelpCenterPage() {
   const [search, setSearch] = useState('');
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
-  // تصفية الأسئلة بناءً على البحث
   const filteredFaqs = FAQS.filter(faq => 
     faq.q.includes(search) || faq.a.includes(search)
   );
 
   return (
-    <div className="min-h-screen pb-24" dir="rtl">
+    // السر هنا: إعطاء الصفحة بالكامل خلفية موحدة (bg-slate-50)
+    <div className="min-h-screen bg-slate-50 pb-24" dir="rtl">
       
       {/* ── Hero & Search Section ── */}
-      <div className="bg-slate-50 border-b border-slate-200 py-12 md:py-20 px-4">
+      <div className="py-12 md:py-20 px-4">
         <div className="max-w-3xl mx-auto text-center space-y-6">
           <div className="w-16 h-16 mx-auto bg-white border border-slate-200 rounded-2xl flex items-center justify-center shadow-sm mb-4">
             <LifeBuoy className="w-8 h-8 text-indigo-600" />
@@ -68,13 +67,13 @@ export default function HelpCenterPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="ابحث عن سؤالك هنا..."
-              className="h-14 pr-12 rounded-xl bg-white border-slate-200 focus-visible:ring-1 focus-visible:ring-indigo-500 shadow-sm text-base"
+              className="h-14 pr-12 rounded-xl bg-white border-slate-200 focus-visible:ring-2 focus-visible:ring-indigo-500 shadow-sm text-base"
             />
           </div>
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-16">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
         
         {/* ── Help Categories ── */}
         {!search && (
@@ -104,7 +103,7 @@ export default function HelpCenterPage() {
           </h2>
           
           {filteredFaqs.length === 0 ? (
-            <div className="text-center py-10 bg-slate-50 rounded-2xl border border-slate-100">
+            <div className="text-center py-10 bg-white rounded-2xl border border-slate-200 shadow-sm">
               <p className="text-slate-500 font-medium">لم نجد نتائج مطابقة لبحثك. جرب كلمات أخرى.</p>
             </div>
           ) : (
@@ -112,17 +111,17 @@ export default function HelpCenterPage() {
               {filteredFaqs.map((faq, idx) => {
                 const isOpen = openFaq === idx;
                 return (
-                  <div key={idx} className="bg-white border border-slate-200 rounded-xl overflow-hidden transition-all">
+                  <div key={idx} className="bg-white border border-slate-200 rounded-xl overflow-hidden transition-all shadow-sm hover:border-slate-300">
                     <button
                       onClick={() => setOpenFaq(isOpen ? null : idx)}
                       className="w-full flex items-center justify-between p-5 text-right hover:bg-slate-50 transition-colors"
                     >
-                      <span className="font-semibold text-slate-900 text-sm md:text-base">{faq.q}</span>
+                      <span className="font-bold text-slate-900 text-sm md:text-base">{faq.q}</span>
                       <ChevronDown className={cn("w-5 h-5 text-slate-400 transition-transform duration-300 shrink-0", isOpen && "rotate-180")} />
                     </button>
                     <div 
                       className={cn(
-                        "px-5 text-slate-600 text-sm leading-relaxed transition-all duration-300 ease-in-out",
+                        "px-5 text-slate-600 text-sm font-medium leading-relaxed transition-all duration-300 ease-in-out",
                         isOpen ? "max-h-40 pb-5 opacity-100" : "max-h-0 opacity-0 overflow-hidden"
                       )}
                     >
@@ -136,20 +135,30 @@ export default function HelpCenterPage() {
         </div>
 
         {/* ── Contact Support ── */}
-        <div className="bg-slate-900 rounded-3xl p-8 md:p-12 text-center mt-12 relative overflow-hidden">
-          {/* Background decoration */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
+        <div className="bg-slate-900 rounded-3xl p-8 md:p-12 text-center mt-12 relative overflow-hidden shadow-xl">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/20 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
           
           <h2 className="text-2xl font-bold text-white mb-3 relative z-10">لم تجد إجابة لسؤالك؟</h2>
           <p className="text-slate-400 text-sm mb-8 relative z-10">فريق الدعم الفني لدينا متاح دائمًا لمساعدتك في أي وقت.</p>
           
           <div className="flex flex-col sm:flex-row justify-center gap-4 relative z-10">
-            <Button className="h-14 px-8 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-base font-bold flex items-center gap-2">
+            {/* زر الواتساب شغال */}
+            <a 
+              href="https://wa.me/201016654858" 
+              target="_blank"
+              rel="noopener noreferrer"
+              className="h-14 px-8 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-base font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-500/20 active:scale-95"
+            >
               <MessageCircle className="w-5 h-5" /> تواصل عبر واتساب
-            </Button>
-            <Button variant="outline" className="h-14 px-8 border-slate-700 bg-slate-800/50 hover:bg-slate-800 text-white rounded-xl text-base font-bold flex items-center gap-2 hover:text-white">
+            </a>
+            
+            {/* زر الإيميل شغال */}
+            <a 
+              href="mailto:support@zameny.tech?subject=طلب مساعدة من متجر زامني" 
+              className="h-14 px-8 border border-slate-700 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-base font-bold flex items-center justify-center gap-2 transition-all active:scale-95"
+            >
               <Mail className="w-5 h-5" /> إرسال بريد إلكتروني
-            </Button>
+            </a>
           </div>
         </div>
 
