@@ -13,9 +13,15 @@ import { Input } from '@/components/ui/input';
 import { PageLoading } from '@/components/shared/LoadingSpinner';
 import api from '@/lib/api';
 
+// تعريف الأنواع لضمان توافق TypeScript
 const STATUS_LABELS: Record<string, string> = {
-  Pending: 'قيد الانتظار', Flagged: 'مشبوه', Confirmed: 'تم التأكيد',
-  Shipped: 'جاري الشحن', Delivered: 'تم التسليم', RTO: 'مرتجع', Cancelled: 'ملغي',
+  Pending: 'قيد الانتظار', 
+  Flagged: 'مشبوه', 
+  Confirmed: 'تم التأكيد',
+  Shipped: 'جاري الشحن', 
+  Delivered: 'تم التسليم', 
+  RTO: 'مرتجع', 
+  Cancelled: 'ملغي',
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -44,9 +50,9 @@ export default function CustomersPage() {
     try {
       const res = await api.get<CustomerHistoryResponse>(`/orders/customer/${cleaned}`);
       setData(res.data.data);
-    } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string }; status?: number } }).response?.data?.message;
-      const status = (err as { response?: { status?: number } }).response?.status;
+    } catch (err: any) {
+      const msg = err.response?.data?.message;
+      const status = err.response?.status;
       if (status === 404) {
         setData(null);
         setError('لم يتم العثور على أي سجل طلبات لهذا الرقم.');
@@ -60,7 +66,6 @@ export default function CustomersPage() {
 
   const ch = data?.customerHistory;
 
-  // تحديد مستوى الخطر
   const isDanger = ch?.isBlacklisted || ch?.riskLevel === 'High';
   const isWarning = !isDanger && ch?.riskLevel === 'Medium';
   const isSafe = ch?.riskLevel === 'Low' && !ch?.isBlacklisted;
@@ -76,7 +81,7 @@ export default function CustomersPage() {
         </p>
       </div>
 
-      {/* ── Premium Search Bar ── */}
+      {/* ── Search Bar ── */}
       <div className="bg-white border border-slate-200/60 p-2 sm:p-2.5 rounded-[1.25rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col sm:flex-row gap-2 sm:gap-3 max-w-2xl transition-all mx-1 sm:mx-0">
         <div className="relative w-full flex-1 group">
           <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
@@ -104,14 +109,13 @@ export default function CustomersPage() {
         </div>
       </div>
 
-      {/* ── Loading State ── */}
+      {/* ── States ── */}
       {loading && (
         <div className="py-16 sm:py-24">
           <PageLoading label="جاري استخراج السجل من قاعدة البيانات..." />
         </div>
       )}
 
-      {/* ── Error / Not Found State ── */}
       {!loading && error && (
         <div className="py-16 sm:py-20 mx-1 sm:mx-0 flex flex-col items-center justify-center bg-white/40 border border-dashed border-slate-300 rounded-[2rem] animate-fade-in">
           <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-3xl flex items-center justify-center shadow-sm mb-4 sm:mb-5 border border-slate-100">
@@ -124,7 +128,6 @@ export default function CustomersPage() {
         </div>
       )}
 
-      {/* ── Initial Empty State ── */}
       {!loading && !error && !searched && (
         <div className="py-20 sm:py-24 mx-1 sm:mx-0 flex flex-col items-center justify-center bg-white/40 border border-dashed border-slate-300 rounded-[2rem]">
           <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-3xl flex items-center justify-center shadow-[0_8px_30px_rgb(0,0,0,0.03)] mb-4 sm:mb-5 border border-slate-100">
@@ -137,34 +140,27 @@ export default function CustomersPage() {
         </div>
       )}
 
-      {/* ── Customer Profile Dashboard ── */}
+      {/* ── Dashboard ── */}
       {!loading && !error && data && ch && (
         <div className="space-y-5 sm:space-y-6 animate-fade-in-up">
           
-          {/* 1. Profile Header Card */}
+          {/* Header Card */}
           <div className="bg-white border border-slate-200/60 rounded-[1.5rem] sm:rounded-[2rem] p-5 sm:p-8 md:p-10 shadow-[0_4px_20px_rgb(0,0,0,0.02)] relative overflow-hidden">
-            {/* Ambient Background Glow based on Risk */}
             <div className={cn(
               "absolute top-0 left-0 w-48 h-48 sm:w-64 sm:h-64 rounded-full blur-3xl -ml-16 -mt-16 sm:-ml-20 sm:-mt-20 pointer-events-none opacity-10",
               isDanger ? "bg-rose-500" : isWarning ? "bg-amber-500" : "bg-emerald-500"
             )} />
 
             <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 relative z-10">
-              {/* Avatar */}
               <div className={cn(
                 'w-16 h-16 sm:w-24 sm:h-24 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm border-2',
                 isDanger ? 'bg-rose-50 border-rose-100' : isWarning ? 'bg-amber-50 border-amber-100' : 'bg-emerald-50 border-emerald-100'
               )}>
-                {isDanger ? (
-                  <ShieldAlert className="w-8 h-8 sm:w-12 sm:h-12 text-rose-600" />
-                ) : isSafe ? (
-                  <ShieldCheck className="w-8 h-8 sm:w-12 sm:h-12 text-emerald-600" />
-                ) : (
-                  <AlertTriangle className="w-8 h-8 sm:w-12 sm:h-12 text-amber-600" />
-                )}
+                {isDanger ? <ShieldAlert className="w-8 h-8 sm:w-12 sm:h-12 text-rose-600" /> : 
+                 isSafe ? <ShieldCheck className="w-8 h-8 sm:w-12 sm:h-12 text-emerald-600" /> : 
+                 <AlertTriangle className="w-8 h-8 sm:w-12 sm:h-12 text-amber-600" />}
               </div>
 
-              {/* Info */}
               <div className="flex-1">
                 <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 mb-2 sm:mb-3">
                   <h2 className="text-xl sm:text-3xl font-black text-slate-900 tracking-wider" dir="ltr">{ch.phoneNumber}</h2>
@@ -197,7 +193,7 @@ export default function CustomersPage() {
             </div>
           </div>
 
-          {/* 2. KPI Stats Cards */}
+          {/* Stats */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
             {[
               { label: 'إجمالي الطلبات', value: ch.totalOrders ?? 0, icon: Package, color: 'indigo', format: (v: number) => v },
@@ -207,7 +203,7 @@ export default function CustomersPage() {
             ].map((stat) => {
               const Icon = stat.icon;
               return (
-                <div key={stat.label} className="bg-white rounded-2xl p-4 sm:p-6 border border-slate-200/60 shadow-sm relative overflow-hidden group flex flex-col justify-between">
+                <div key={stat.label} className="bg-white rounded-2xl p-4 sm:p-6 border border-slate-200/60 shadow-sm flex flex-col justify-between">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 sm:mb-4 gap-2 relative z-10">
                     <p className="text-[11px] sm:text-xs font-bold text-slate-500">{stat.label}</p>
                     <div className={cn(
@@ -232,11 +228,10 @@ export default function CustomersPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-6">
             
-            {/* 3. Risk Progress & IPs */}
+            {/* IPs & Detail */}
             <div className="lg:col-span-1 bg-white border border-slate-200/60 shadow-sm rounded-[1.5rem] p-5 sm:p-7 h-max space-y-6">
               <h3 className="text-base font-black text-slate-800">تفاصيل الخطر والأجهزة</h3>
               
-              {/* Custom Smooth Progress Bar */}
               <div>
                 <div className="flex justify-between text-xs sm:text-sm mb-2.5">
                   <span className="font-bold text-slate-600">مؤشر الثقة</span>
@@ -259,17 +254,17 @@ export default function CustomersPage() {
                   <span className={cn('text-[10px] sm:text-xs font-black flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border', 
                     ch.isBlacklisted ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'
                   )}>
-                    {ch.isBlacklisted ? <><ShieldAlert className="w-3.5 h-3.5"/> محظور عالمياً</> : <><ShieldCheck className="w-3.5 h-3.5"/> سليم</>}
+                    {ch.isBlacklisted ? <><ShieldAlert className="w-3.5 h-3.5"/> محظور</> : <><ShieldCheck className="w-3.5 h-3.5"/> سليم</>}
                   </span>
                 </div>
                 
                 <div className="pt-4 border-t border-slate-200/60">
                   <div className="flex items-center justify-between text-xs sm:text-sm mb-3.5">
                     <span className="font-semibold text-slate-500 flex items-center gap-1.5">
-                      <Laptop className="w-4 h-4 text-slate-400" /> الأجهزة (IPs):
+                      <Laptop className="w-4 h-4 text-slate-400" /> الأجهزة:
                     </span>
                     <span className="font-black text-slate-800 bg-white px-2.5 py-1 rounded-md border border-slate-200 text-[10px] sm:text-xs">
-                      {(ch.knownIps || []).length} عنوان مسجل
+                      {(ch.knownIps || []).length} عنوان
                     </span>
                   </div>
                   
@@ -286,7 +281,7 @@ export default function CustomersPage() {
               </div>
             </div>
 
-            {/* 4. Recent Orders Table/List */}
+            {/* Table */}
             <div className="lg:col-span-2 bg-white border border-slate-200/60 shadow-sm rounded-[1.5rem] overflow-hidden flex flex-col">
               <div className="px-5 sm:px-6 py-4 sm:py-5 border-b border-slate-100 bg-slate-50/50">
                 <h3 className="text-base font-black text-slate-800 flex items-center gap-2.5">
@@ -299,7 +294,7 @@ export default function CustomersPage() {
                   <table className="w-full text-right text-sm">
                     <thead className="bg-white border-b border-slate-100 hidden sm:table-header-group">
                       <tr>
-                        <th className="px-6 py-4 font-bold text-slate-400 text-xs tracking-wider">رقم الطلب / التاريخ</th>
+                        <th className="px-6 py-4 font-bold text-slate-400 text-xs tracking-wider">الطلب / التاريخ</th>
                         <th className="px-6 py-4 font-bold text-slate-400 text-xs tracking-wider">الحالة</th>
                         <th className="px-6 py-4 font-bold text-slate-400 text-xs tracking-wider">الأمان</th>
                         <th className="px-6 py-4 font-bold text-slate-400 text-xs tracking-wider text-left">الإجمالي</th>
@@ -308,37 +303,38 @@ export default function CustomersPage() {
                     <tbody className="divide-y divide-slate-100">
                       {data.recentOrders.map((order, i) => (
                         <tr key={i} className="hover:bg-slate-50/50 transition-colors flex flex-col sm:table-row py-2 sm:py-0 border-b sm:border-0 border-slate-100 last:border-0">
-                          {/* Order Number & Date */}
                           <td className="px-5 sm:px-6 py-3 sm:py-4 flex items-center gap-3 sm:table-cell">
                             <div className="flex items-center gap-3">
-                              <div className="w-9 h-9 sm:w-10 sm:h-10 bg-slate-50 rounded-xl flex items-center justify-center border border-slate-100 shrink-0 hidden sm:flex">
-                                <Package className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400" />
+                              <div className="w-9 h-9 bg-slate-50 rounded-xl flex items-center justify-center border border-slate-100 shrink-0 hidden sm:flex">
+                                <Package className="w-4 h-4 text-slate-400" />
                               </div>
-                              <div className="flex flex-col gap-1 sm:gap-0.5">
-                                <span className="text-xs sm:text-sm font-mono font-bold text-slate-800 bg-slate-100 sm:px-1.5 py-0.5 px-2 rounded-md sm:rounded w-max">{order.orderNumber}</span>
+                              <div className="flex flex-col gap-1">
+                                <span className="text-xs sm:text-sm font-mono font-bold text-slate-800 bg-slate-100 sm:px-1.5 py-0.5 px-2 rounded-md w-max">{order.orderNumber}</span>
                                 {order.createdAt && <span className="text-[10px] sm:text-[11px] font-medium text-slate-500">{formatDateShort(order.createdAt)}</span>}
                               </div>
                             </div>
                           </td>
                           
-                          {/* Status */}
                           <td className="px-5 sm:px-6 py-1.5 sm:py-4">
-                            <span className={cn('text-[10px] sm:text-xs px-2 sm:px-2.5 py-1 rounded-md font-bold border inline-flex items-center gap-1.5', STATUS_COLORS[order.status] || 'bg-slate-50 text-slate-600 border-slate-200')}>
+                            {/* ✅ الإصلاح لـ STATUS_COLORS */}
+                            <span className={cn(
+                              'text-[10px] sm:text-xs px-2 sm:px-2.5 py-1 rounded-md font-bold border inline-flex items-center gap-1.5', 
+                              (order.status && STATUS_COLORS[order.status as keyof typeof STATUS_COLORS]) || 'bg-slate-50 text-slate-600 border-slate-200'
+                            )}>
                                <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-current opacity-70" />
-                              {(order.status && STATUS_LABELS[order.status as keyof typeof STATUS_LABELS]) || order.status}
+                               {/* ✅ الإصلاح لـ STATUS_LABELS */}
+                               {(order.status && STATUS_LABELS[order.status as keyof typeof STATUS_LABELS]) || order.status}
                             </span>
                           </td>
                           
-                          {/* Fraud Badge */}
                           <td className="px-5 sm:px-6 py-1.5 sm:py-4">
                             {order.fraudAnalysis && (
                               <div className="scale-90 origin-right sm:scale-100">
-                                <FraudBadge fraudAnalysis={order.fraudAnalysis as Parameters<typeof FraudBadge>[0]['fraudAnalysis']} showScore />
+                                <FraudBadge fraudAnalysis={order.fraudAnalysis as any} showScore />
                               </div>
                             )}
                           </td>
                           
-                          {/* Amount */}
                           <td className="px-5 sm:px-6 pt-1.5 pb-4 sm:py-4 sm:text-left">
                             {order.totalAmount !== undefined && (
                               <span className="text-xs sm:text-sm font-black text-indigo-600 bg-indigo-50 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-md inline-block w-max">
@@ -352,8 +348,8 @@ export default function CustomersPage() {
                   </table>
                 ) : (
                   <div className="p-10 sm:p-14 flex flex-col items-center justify-center text-center">
-                     <Package className="w-8 h-8 sm:w-10 sm:h-10 text-slate-200 mb-3" />
-                    <p className="text-xs sm:text-sm font-medium text-slate-500">لا توجد طلبات سابقة مسجلة لهذا العميل في قاعدة البيانات.</p>
+                    <Package className="w-8 h-8 text-slate-200 mb-3" />
+                    <p className="text-xs sm:text-sm font-medium text-slate-500">لا توجد طلبات سابقة مسجلة لهذا العميل.</p>
                   </div>
                 )}
               </div>
