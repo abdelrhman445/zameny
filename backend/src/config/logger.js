@@ -4,8 +4,7 @@ const { createLogger, format, transports } = require('winston');
 const { combine, timestamp, printf, colorize, errors } = format;
 
 // تحديد البيئة الحالية
-const isProduction = process.env.NODE_ENV === 'production';
-
+const isProduction = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
 // تنسيق اللوجز
 const logFormat = printf(({ level, message, timestamp, stack }) => {
   return `${timestamp} [${level}]: ${stack || message}`;
