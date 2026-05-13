@@ -82,7 +82,7 @@ app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.get('/', (req, res) => {
   res.status(200).json({
     status: 'success',
-    message: 'Welcome to A.E.E Backend API 🚀',
+    message: 'Welcome to Zameny Backend API 🚀',
     environment: process.env.NODE_ENV,
     timestamp: new Date().toISOString()
   });
@@ -92,7 +92,7 @@ app.get('/', (req, res) => {
 app.get('/health', (req, res) => {
   res.status(200).json({
     status:    'OK',
-    platform:  'A.E.E - Advanced E-commerce Engine',
+    platform:  'Zameny - Store',
     version:   '2.0.0',
     timestamp: new Date().toISOString(),
   });

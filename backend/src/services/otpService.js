@@ -84,7 +84,7 @@ const sendSmsViaProvider = async (toPhone, otp) => {
       api_secret: apiSecret,
       to:         toPhone.replace(/^\+/, ''), // Vonage expects no leading '+'
       from,
-      text: `Your A.E.E order verification code is: ${otp}. Valid for 5 minutes. Do not share it.`,
+      text: `Your Zameny order verification code is: ${otp}. Valid for 5 minutes. Do not share it.`,
     },
     { timeout: 10_000 }
   );

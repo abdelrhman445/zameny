@@ -24,7 +24,7 @@ const buildOrderMessage = (order) => {
 
   return (
     `<b>━━━━━━━━━━━━━━━━━━━━━━━━</b>\n` +
-    `<b>🛒  A.E.E — New Order Alert</b>\n` +
+    `<b>🛒  Zameny — New Order Alert</b>\n` +
     `<b>━━━━━━━━━━━━━━━━━━━━━━━━</b>\n\n` +
     `${statusEmoji} <b>Status:</b> <code>${order.status}</code>\n` +
     `🔢 <b>Order #:</b> <code>${order.orderNumber}</code>\n` +
@@ -195,7 +195,7 @@ const buildStatusUpdateMessage = (order, actionBy = 'Merchant') => {
 
   return (
     `<b>━━━━━━━━━━━━━━━━━━━━━━━━</b>\n` +
-    `<b>🛒  A.E.E — Order Updated</b>\n` +
+    `<b>🛒  Zameny — Order Updated</b>\n` +
     `<b>━━━━━━━━━━━━━━━━━━━━━━━━</b>\n\n` +
     `${emoji} <b>Order #${order.orderNumber}</b> is now <b>${order.status}</b>\n\n` +
     `👤 Customer: <b>${order.customerName}</b> (<code>${order.customerPhone}</code>)\n` +
