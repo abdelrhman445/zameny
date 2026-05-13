@@ -144,7 +144,7 @@ export default function HelpCenterPage() {
           <div className="flex flex-col sm:flex-row justify-center gap-4 relative z-10">
             {/* زر الواتساب شغال */}
             <a 
-              href="https://wa.me/201016654858" 
+              href="https://wa.me/201011857244?text=مرحبًا%20فريق%20الدعم%20في%20متجر%20زامني،%20لدي%20سؤال%" 
               target="_blank"
               rel="noopener noreferrer"
               className="h-14 px-8 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-base font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-500/20 active:scale-95"
