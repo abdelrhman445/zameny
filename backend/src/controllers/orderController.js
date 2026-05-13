@@ -53,10 +53,13 @@ const confirmOrderInternal = async (orderId, session = null) => {
   await order.save({ session });
 
   // 3. طلب بوليصة الشحن (AWB) أوتوماتيك
-  _triggerShipping(order).catch((err) =>
-    logger.error(`[Autopilot] Shipping trigger failed for ${order.orderNumber}:`, { message: err.message })
-  );
-
+  // تأخير عملية الشحن ثانيتين لتجنب تضارب قاعدة البيانات (Write Conflict) مع الـ Transaction
+  setTimeout(() => {
+    _triggerShipping(order).catch((err) =>
+      logger.error(`[Autopilot] Shipping trigger failed for ${order.orderNumber}:`, { message: err.message })
+    );
+  }, 2000);
+  
   logger.info(`[Autopilot] Order ${order.orderNumber} confirmed and stock deducted.`);
   return order;
 };
