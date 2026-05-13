@@ -1,0 +1,197 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+#   A.E.E Backend  |  GitHub Actions CI/CD Pipeline
+#
+#   Triggers:
+#     • push to main        → full CI + Docker build + push to registry
+#     • pull_request        → CI only (no deploy)
+#
+#   Secrets required (set in repo Settings → Secrets & variables → Actions):
+#     DOCKER_USERNAME       — Docker Hub username (or registry username)
+#     DOCKER_PASSWORD       — Docker Hub access token
+#     DEPLOY_HOST           — Production server IP / hostname
+#     DEPLOY_SSH_KEY        — Private SSH key for the deploy user
+#     DEPLOY_USER           — SSH user on the server (e.g. "deploy")
+#     MONGO_URI_TEST        — MongoDB URI for test runner
+#     JWT_SECRET_TEST       — JWT secret for test runner
+# ═══════════════════════════════════════════════════════════════════════════════
+
+name: CI / CD — A.E.E Backend
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancel any in-progress run for the same ref (saves runner minutes)
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  IMAGE_NAME: ${{ secrets.DOCKER_USERNAME }}/aee-backend
+  NODE_VERSION: '20'
+
+# ─────────────────────────────────────────────────────────────────────────────
+jobs:
+
+  # ── Job 1: Lint & Test ────────────────────────────────────────────────────
+  test:
+    name: Lint & Test
+    runs-on: ubuntu-latest
+
+    services:
+      mongodb:
+        image: mongo:7
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.runCommand({ ping: 1 })'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linter
+        run: npm run lint --if-present
+
+      - name: Run tests
+        env:
+          NODE_ENV:  test
+          MONGO_URI: ${{ secrets.MONGO_URI_TEST || 'mongodb://localhost:27017/aee_test' }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET_TEST || 'test-secret-key-not-for-production' }}
+          PORT: 5000
+        run: npm test --if-present
+
+      - name: Upload test coverage (optional)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/
+          if-no-files-found: ignore
+
+  # ── Job 2: Build & Push Docker Image (main branch only) ──────────────────
+  build-and-push:
+    name: Build & Push Docker Image
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build.outputs.digest }}
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Extract Docker metadata (tags & labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            # Tag with git SHA (immutable)
+            type=sha,prefix=sha-,format=short
+            # Tag with 'latest' on main
+            type=raw,value=latest,enable={{is_default_branch}}
+            # Semantic version tags (if you push git tags like v1.2.3)
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+
+      - name: Build and push image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file:    ./Dockerfile
+          push:    true
+          tags:    ${{ steps.meta.outputs.tags }}
+          labels:  ${{ steps.meta.outputs.labels }}
+          # Cache layers in GitHub Actions cache registry
+          cache-from: type=gha
+          cache-to:   type=gha,mode=max
+          # Build args (do NOT pass secrets here — use runtime env)
+          build-args: |
+            NODE_ENV=production
+
+      - name: Output image digest
+        run: echo "Pushed image digest ${{ steps.build.outputs.digest }}"
+
+  # ── Job 3: Deploy to Production (main branch, after successful build) ─────
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment:
+      name: production
+      url:  https://${{ secrets.DEPLOY_HOST }}
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host:       ${{ secrets.DEPLOY_HOST }}
+          username:   ${{ secrets.DEPLOY_USER }}
+          key:        ${{ secrets.DEPLOY_SSH_KEY }}
+          timeout:    60s
+          script: |
+            set -e
+
+            echo "==> Pulling latest image..."
+            docker pull ${{ env.IMAGE_NAME }}:latest
+
+            echo "==> Stopping old container..."
+            docker stop aee-backend || true
+            docker rm   aee-backend || true
+
+            echo "==> Starting new container..."
+            docker run -d \
+              --name aee-backend \
+              --restart unless-stopped \
+              -p 5000:5000 \
+              --env-file /etc/aee/.env \
+              --log-driver json-file \
+              --log-opt max-size=50m \
+              --log-opt max-file=5 \
+              --memory 512m \
+              --cpus="1.5" \
+              ${{ env.IMAGE_NAME }}:latest
+
+            echo "==> Waiting for health check..."
+            sleep 8
+            curl -f http://localhost:5000/health || (echo "Health check failed!" && exit 1)
+
+            echo "==> Cleaning old images..."
+            docker image prune -f
+
+            echo "==> Deployment complete!"
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "::error::Deployment to production failed! Check the logs above."
+          # TODO: add Slack/Telegram notification here
